@@ -39,7 +39,7 @@ if __name__ == "__main__":
     save_path = ".github"                             # And also sets a destination folder to save the results
     os.makedirs(save_path, exist_ok=True) 
 
-    filenames = next(walk('./Files'), (None, None, []))[2]  # Aims to folder that contains all files that will be converted and gets all filenames
+    filenames = next(walk(origin_path), (None, None, []))[2]  # Aims to folder that contains all files that will be converted and gets all filenames
 
     for name in filenames:                                  # For each report (filename) make an iteration
 
