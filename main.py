@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
 
     origin_path = "TestFolder"
-    save_path = ".github"                             # And also sets a destination folder to save the results
+    save_path = "ResultsFolder"                             # And also sets a destination folder to save the results
     os.makedirs(save_path, exist_ok=True) 
 
     filenames = next(walk(origin_path), (None, None, []))[2]  # Aims to folder that contains all files that will be converted and gets all filenames
