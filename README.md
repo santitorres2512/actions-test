@@ -24,4 +24,4 @@ As mentioned above, once all these updates are applied inside the .jrxml file, i
 
 *To execute the script, and make .jrxml files compatible with Dev environment. Just upload or update something in the repository, this way the script will be triggered and will convert all files inside the origin folder folder, once the process is done all results will be contained inside the results folder after 15 seconds. 
 
-NOTE: Inside each folder (Files,Results,src) you can also find an "info.txt" file with more detailed information.
+
