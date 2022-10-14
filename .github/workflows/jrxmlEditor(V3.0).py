@@ -1,1 +1,1 @@
-variableX = 12345
+print('Script executed using actions')
