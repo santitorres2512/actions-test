@@ -20,15 +20,15 @@ logger.addHandler(logger_file_handler)
 
 
 try:
-    SOME_SECRET = os.environ["SOME_SECRET"]
+    SCRIPT_SECRET_TOKEN = os.environ["SCRIPT_SECRET_TOKEN"]
 except KeyError:
-    SOME_SECRET = "Token not available!"
+    SCRIPT_SECRET_TOKEN = "Token not available!"
     #logger.info("Token not available!")
     #raise
 
 
 if __name__ == "__main__":
-    logger.info(f"Token value: {SOME_SECRET}")
+    logger.info(f"Token value: {SCRIPT_SECRET_TOKEN}")
 
     print("It executes this part of the script")
 
