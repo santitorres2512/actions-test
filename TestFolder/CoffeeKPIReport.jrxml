@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_ClosingSales" language="groovy" pageWidth="1540" pageHeight="1000" whenNoDataType="AllSectionsNoDetail" columnWidth="1500" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" uuid="0817241c-9d6f-450b-a651-51a83721769f">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWStyle" : "oneVIEWStyle"]]></template>
+	<style name="zebra">
+		<box rightPadding="0"/>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{PAGE_COUNT}.intValue() % 2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#D4D4D4">
+				<box leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+			</style>
+		</conditionalStyle>
+	</style>
+	<style name="lostHoursStyle" style="zebra" mode="Opaque">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$F{lostHours} < -30]]></conditionExpression>
+			<style backcolor="#FA2723"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$F{lostHours} > 0]]></conditionExpression>
+			<style mode="Opaque" forecolor="#000000" backcolor="#FA980F"/>
+		</conditionalStyle>
+	</style>
+	<subDataset name="ClosingSalesDataset" uuid="4750145e-5a3a-44d6-8e06-25e6bd60f058">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NO_DATA_ADAPTER"/>
+		<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false"/>
+		<parameter name="storeIdsDunkin" class="java.util.List" nestedType="java.lang.Integer">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
+		</parameter>
+		<parameter name="date" class="java.util.Date"/>
+		<parameter name="dayOfWeek" class="java.lang.String"/>
+		<parameter name="periodNumber" class="java.lang.String"/>
+		<queryString>
+			<![CDATA[SELECT 
+SUM(COALESCE(summary.gross_sales, 0)) AS grossSales, 
+SUM(COALESCE(yoy.daily_sales_ty, 0)) AS netSalesTy,
+SUM(COALESCE(yoy.daily_sales_ly, 0)) AS netSalesLy,
+refundAmountDollars.detailAmount AS refundAmountDollars,
+SUM(COALESCE(summary.void_amount, 0)) AS voidAmountDollars,
+SUM(COALESCE(summary.overrings, 0)) AS overringsAmount,
+SUM(COALESCE(summary.overrings_as_pct_of_net_sales, 0)) AS overringsPctOfNetSales,
+SUM(COALESCE(summary.comps_discounts, 0))  AS DiscountDollars,
+SUM(COALESCE(summary.paid_out, 0)) AS paidOuts,
+c_date.mysql_date AS fiscalWeek
+FROM c_store cs 
+JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
+JOIN org_brand ON (org_brand.brand_id = cs.brand_id AND org_brand.code = 'dunkin')
+JOIN c_date ON (c_date.mysql_date =  20220301)
+JOIN c_store_access ON (c_store_access.store_id = cs.store_id)
+JOIN c_user ON (c_store_access.user_id = c_user.user_id AND  username =$P{LoggedInUsername})
+LEFT JOIN pos_biziq_store_summary summary ON (summary.store_id  = cs.store_id AND summary.date = c_date.mysql_date)
+LEFT JOIN agg_data_sales_yoy yoy ON (yoy.store_id  = cs.store_id AND yoy.date = c_date.mysql_date)
+LEFT JOIN (
+	SELECT 
+	pos_biziq_payment_types.store_id, 
+	SUM(COALESCE(pos_biziq_payment_types.detail_amount, 0)) AS detailAmount
+	FROM c_store cs 
+	JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
+	JOIN org_brand ON (org_brand.brand_id = cs.brand_id AND org_brand.code = 'dunkin')
+	JOIN c_date ON (c_date.mysql_date =  20220301)
+	JOIN c_store_access ON (c_store_access.store_id = cs.store_id)
+	JOIN c_user ON (c_store_access.user_id = c_user.user_id AND  username = $P{LoggedInUsername})
+	LEFT JOIN pos_biziq_payment_types ON (pos_biziq_payment_types.store_id = cs.store_id)
+	WHERE (pos_biziq_payment_types.transaction_type = 'Comps &amp; Discounts' and gl_name = 'Refunds')) refundAmountDollars ON (refundAmountDollars.store_id = cs.store_id)
+WHERE cs.store_id = 15
+GROUP BY cs.store_id 
+ORDER BY netSalesTy]]>
+		</queryString>
+		<field name="grossSales" class="java.math.BigDecimal"/>
+		<field name="netSalesTy" class="java.math.BigDecimal"/>
+		<field name="netSalesLy" class="java.math.BigDecimal"/>
+		<field name="refundAmountDollars" class="java.math.BigDecimal"/>
+		<field name="voidAmountDollars" class="java.math.BigDecimal"/>
+		<field name="overringsAmount" class="java.math.BigDecimal"/>
+		<field name="DiscountDollars" class="java.math.BigDecimal"/>
+		<field name="paidOuts" class="java.math.BigDecimal"/>
+		<field name="fiscalWeek" class="java.sql.Date"/>
+		<field name="overringsPctOfNetSales" class="java.math.BigDecimal"/>
+		<variable name="salesDifference" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{netSalesTy}.subtract($F{netSalesLy})]]></variableExpression>
+		</variable>
+		<variable name="growthPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[new BigDecimal(100).multiply(($V{salesDifference}.divide($F{netSalesLy}, 2, RoundingMode.HALF_UP)))]]></variableExpression>
+		</variable>
+		<variable name="refundPctOfSales" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{refundAmountDollars}.divide($F{netSalesTy}, 2, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="voidPctOfSales" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{voidAmountDollars}.divide($F{netSalesTy}, 2, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="overringsPctOfSales" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{overringsAmount}.divide($F{netSalesTy}, 2, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="discountPctOfSales" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{DiscountDollars}.divide($F{netSalesTy}, 2, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+	</subDataset>
+	<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+	<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getUsername()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="storeIdsDunkin" class="java.util.List" nestedType="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="date" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateGetStart" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{startDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateGetStart" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{endDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="WeekDatesTb" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="periodDatesTb" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateFilter" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[($P{periodDatesTb} != null)? $P{periodDatesTb} :
+(($P{WeekDatesTb} != null)? $P{WeekDatesTb} :
+$P{startDateGetStart})]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[($P{periodDatesTb} != null)? new java.lang.String("(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{periodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{periodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1))))") :
+(($P{WeekDatesTb} != null)? new java.lang.String(  "(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{WeekDatesTb} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{WeekDatesTb} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1))))") :
+$P{endDateGetStart})]]></defaultValueExpression>
+	</parameter>
+	<parameter name="dateGetStart" class="java.lang.String">
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{date}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="dayOfWeek" class="java.lang.String"/>
+	<parameter name="periodNumber" class="java.lang.String">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT 
+DATE_FORMAT($P!{dateGetStart}, '%w') AS dayOfWeek,
+startCal.date AS startDate,
+endCal.date AS endDate,
+startCal.period_number AS startPeriod,
+endCal.period_number AS endPeriod,
+startCal.week_of_period AS startWeek,
+endCal.week_of_period AS endWeek,
+startCal.day_of_week AS startDayOfWeek,
+endCal.day_of_week AS endDayOfWeek,
+org_brand.small_logo AS brandLogo
+FROM org_brand
+JOIN c_calendar startCal ON (startCal.calendar_id = org_brand.calendar_id AND startCal.date = DATE($P!{startDateFilter}) AND org_brand.code = "dunkin")
+JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCal.date = DATE($P!{endDateFilter}) AND org_brand.code = "dunkin")]]>
+	</queryString>
+	<field name="startDate" class="java.util.Date"/>
+	<field name="endDate" class="java.util.Date"/>
+	<field name="startPeriod" class="java.lang.Integer"/>
+	<field name="endPeriod" class="java.lang.Integer"/>
+	<field name="startWeek" class="java.lang.Integer"/>
+	<field name="endWeek" class="java.lang.Integer"/>
+	<field name="startDayOfWeek" class="java.lang.Integer"/>
+	<field name="endDayOfWeek" class="java.lang.Integer"/>
+	<field name="brandLogo" class="java.io.InputStream"/>
+	<field name="dayOfWeek" class="java.lang.String"/>
+	<title>
+		<band height="181" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="56" width="1500" height="30" forecolor="#2E4454" uuid="0ff94c02-1fce-4147-a096-bcfeabfa0462"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Coffee KPI report"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="86" width="1500" height="20" forecolor="#2E4454" uuid="66a6b172-06ef-424e-8649-131dde541ba6"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Date Range:" + DATEFORMAT($F{startDate},"M/d/YYYY" ) + " - " + DATEFORMAT($F{endDate},"M/d/YYYY" )]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="106" width="1500" height="20" forecolor="#2E4454" uuid="099d7159-c86a-47b0-b298-aad3ef06cbb4"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Start Date: P" +$F{startPeriod} + ": W" + $F{startWeek} + ": D" + $F{startDayOfWeek}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="126" width="1500" height="20" forecolor="#2E4454" uuid="36cdc320-1627-4f2f-81b5-52e8e8e7bc78"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["End Date: P" +$F{endPeriod} + ": W" + $F{endWeek} + ": D" + $F{endDayOfWeek}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="171" width="1500" height="5" forecolor="#1D5786" backcolor="#1D5786" uuid="6db722fc-bdb7-4f87-adae-afd126e815dc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="179" width="1500" height="2" forecolor="#ACD485" backcolor="#ACD485" uuid="9a93dbac-a25d-4541-a47a-1c18910eb179">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<image scaleImage="RealSize">
+				<reportElement x="0" y="0" width="1400" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "oneVIEWReportLogo.png"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement x="1400" y="0" width="100" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
+				<imageExpression><![CDATA[$F{brandLogo}]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<detail>
+		<band height="60" splitType="Stretch">
+			<componentElement>
+				<reportElement x="0" y="0" width="1500" height="60" uuid="08020a82-72cf-413c-b046-478d532ef743">
+					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					<property name="com.jaspersoft.studio.table.style.table_header"/>
+					<property name="com.jaspersoft.studio.table.style.column_header"/>
+					<property name="com.jaspersoft.studio.table.style.detail"/>
+				</reportElement>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="ClosingSalesDataset" uuid="c6ca8bc2-622a-4653-92bf-ed46bff76126">
+						<datasetParameter name="LoggedInUsername">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUsername}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="storeIdsDunkin">
+							<datasetParameterExpression><![CDATA[$P{storeIdsDunkin}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="date">
+							<datasetParameterExpression><![CDATA[$P{date}.getStart()]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="dayOfWeek">
+							<datasetParameterExpression><![CDATA[$F{dayOfWeek}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:columnGroup width="1500" uuid="1a0ada09-cca3-4846-92a2-326aae7fe7b2">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [15]"/>
+						<jr:column width="100" uuid="76ea0459-a5b1-447a-9531-14d6e9a67dc8">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+							<jr:tableFooter height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="a47ce0cf-2195-4b04-b40c-8fccb03261cf"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA["Totals:"]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="240344bf-3c19-4916-8c8f-ee75917f6817"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Fiscal Week"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="53992a39-a004-4c9b-b897-95e060f32f4e"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[DATEFORMAT($F{fiscalWeek},"MM/dd/yyyy")]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="c640dadf-b1b6-4fe1-9574-52adc370fbae">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="db585ceb-4dbf-413d-81ee-2e9c4c2ae7a5">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="03ce30ae-ce52-4e03-aa8e-d7f56b282a16"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Gross Sales"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="f164cb9b-b8b3-4d01-bac0-04fb3747afdf"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grossSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="db005d5e-7d2f-472b-98b4-923bb320ce3c">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="bf9acab8-3537-4e35-b97b-d6e5b3388d95">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="0e7a733b-849b-4f61-a4cf-f9628028e1ae"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales TY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="e8087884-463c-4454-8601-1d814b5afca5"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{netSalesTy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="3f5dbdd2-95c8-401c-bb50-822f54b3ce74">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8019f72e-2219-4796-bc52-1afc434af6ba">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="198504a4-472f-489f-a889-504745f27e92"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="05eb6716-5e8b-4ae5-8068-21a02dd5151b"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{netSalesLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="e88d3e84-2051-4359-8a04-e1ea55e61ce5">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="7d43b39d-ea7b-4f4f-a926-38386b28d337">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="4cd396e9-e3c2-4934-b42c-cd808cd04019"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Sales +/-"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="6ea88d8f-4dbd-4a74-9861-c4f5bd2845f4"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{salesDifference}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="5bb531c5-f3f9-46fe-94c7-db0e4540c5cc">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="f32147ad-5ab0-4301-a81f-cc04fbaffc03">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="80b797cc-6dc5-449a-b0bc-972522600474"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Growth %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="42ce24c5-2f66-4921-91f2-f7be6e09878a"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{growthPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="f57e9a8e-70ac-46df-aef3-7acbf064f958">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="a92a3452-4725-4b71-a19f-b3a962c18e64">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="0a9079f2-d1d4-482d-831d-a319e30ac9c1"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Refund Amount \$"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="70ecd209-12d4-44a5-8f6e-087865fb33d7"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{refundAmountDollars}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="e781a36d-ba7b-4a4f-913d-ffcd118d6523">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="bea972f6-bd2b-4a0a-baf0-09f74cc254a3">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="0fdbe351-a884-4b1f-8ac5-211c066a0812"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Refund % Of Sales"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="f9f12800-9962-4c4b-a762-e6d941d2088e"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{refundPctOfSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="d5b344ae-8a00-41ab-9bf3-0b5bcb62af57">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="dc49dc8b-ee88-4a27-9db5-e5827e2fbc81">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="ba0821d7-b064-4242-88d8-3f4f9d736944"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Void Amount  \$"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="7362ac8c-145a-4371-8eb9-d7c1996df2f3"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{voidAmountDollars}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="7dd24579-0a67-4a4b-a188-03e80a185027">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="b77ac521-5b29-4f27-a4e9-8adbb1719414">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="d2b9015b-124a-4f06-9933-6a0b60c328cb"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Void % Of Sales"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="82c51ed3-0700-491d-a94f-9f1abe730d49"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{voidPctOfSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="23be8d97-9ed8-49b5-a323-51b868f9ecc0">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="aacde276-9c1f-4ac9-b790-188ec6890467">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="e07d0578-1458-47db-b9dd-bdd92f500535"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Overrings Amount"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="2c621b82-46af-4583-be1c-8cb62ffa377d"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{overringsAmount}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="7674d62a-0d12-4098-a87c-d5080e492a0a">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column12"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="4674c46b-cc6e-4799-816f-a1af5e993586">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="ed8ca0c3-729b-49bb-9c8c-853ca73cc0f3"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Overrings % Of Sales"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="c4f348e2-2ba0-402c-ab65-4c29c2d366cc"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{overringsPctOfNetSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="0c5380fb-bcf6-4915-a411-8d5bb89b5dce">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column13"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="d99ac1a1-fa71-4384-8273-6cbf9081dd45">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="e0cf1673-3816-4de2-ab06-54b97f0b4790"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Discount  \$"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="03f725f9-03a2-43cb-b352-efb5e8f39848"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{DiscountDollars}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="0b8acfdf-b787-48a2-a2b3-eb274d1bc9e2">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column14"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="7d21843f-34bb-47dd-95c4-d14b07681a75">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="dd1d721e-027b-43c8-87bd-16093a92df83"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Discount  % Of Sales"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="a420e945-20d4-4554-93f0-803a94ad686e"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{discountPctOfSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="100" uuid="7235c248-6a3a-484f-b468-d77e10c5a051">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column15"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="7271b7dd-358f-4ae1-a79b-bcff9c666f13">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.5" lineStyle="Dashed"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="12" isBold="true"/>
+									</textElement>
+								</textField>
+							</jr:tableFooter>
+							<jr:columnHeader height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="55805d14-7ca9-40dc-aeb8-17a60854a0e1"/>
+									<box leftPadding="4"/>
+									<textElement textAlignment="Left" verticalAlignment="Middle">
+										<font isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Paid Outs"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="c6bb90df-0c9d-4cf9-a4e1-4b90419da48b"/>
+									<box leftPadding="0" rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{paidOuts}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:columnGroup>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="75" splitType="Stretch">
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="10" width="1500" height="5" forecolor="#1D5786" backcolor="#1D5786" uuid="1995ce53-2bf8-4db1-9e2a-12a72125521e">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="5" width="1500" height="2" forecolor="#ACD485" backcolor="#ACD485" uuid="e3781c21-5b94-4e2b-9843-a23f8980bb07">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<textField>
+				<reportElement x="0" y="15" width="1500" height="20" uuid="67c90d52-6f75-4eb0-9297-0ac95c2c7260">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Report By: " + $P{LoggedInUserFullName} ?: "Unknown"]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd yyyy hh:mma" isBlankWhenNull="true">
+				<reportElement x="0" y="35" width="1500" height="20" uuid="c8c127d9-def6-4610-8bab-d0c571f5b707"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="0" y="55" width="1" height="20" uuid="8d92282c-bd3f-4653-82bb-da82accb106e">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="50" y="55" width="1450" height="20" uuid="c7a35ed2-c597-441d-9af9-f2eb6e1fc9b4">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="20">
+			<staticText>
+				<reportElement key="staticText-16" x="0" y="0" width="1500" height="20" uuid="694740cc-7585-48e7-840f-4cfd30758f08">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[No data for current selections]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>
