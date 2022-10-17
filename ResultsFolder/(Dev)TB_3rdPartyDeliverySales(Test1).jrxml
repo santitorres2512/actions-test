@@ -5,7 +5,7 @@
 	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
 	<property name="net.sf.jasperreports.export.xls.freeze.row" value="6"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/jrtx/MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
 	<style name="zebra">
 		<box rightPadding="0"/>
 		<conditionalStyle>
@@ -244,11 +244,11 @@ ORDER BY groupName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateFormatted" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -307,7 +307,7 @@ DATE($P!{endDateFilter}) AS endDate
 				<graphicElement>
 					<pen lineWidth="0.0" lineStyle="Solid"/>
 				</graphicElement>
-				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "OdsLogo137x37.jpg"]]></imageExpression>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/images/logo.png" : "OdsLogo137x37.jpg"]]></imageExpression>
 			</image>
 			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
 				<reportElement x="1220" y="0" width="80" height="21" uuid="7292d94b-d0aa-402c-b49d-05225da819f5"/>
