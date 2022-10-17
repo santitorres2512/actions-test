@@ -3,6 +3,11 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_ClosingSales" language="groovy" pageWidth="1240" pageHeight="1000" whenNoDataType="AllSectionsNoDetail" columnWidth="1200" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" uuid="0817241c-9d6f-450b-a651-51a83721769f">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.sql.tables">
+		<![CDATA[Y19jYWxlbmRhciAsMjc1LDUxLDBiODJlODZiLTFmMWQtNDZjZC05NmFkLWQ5ZTFkODhhMmYyZjtv
+cmdfYnJhbmQgLDE0OSwxNSxmMTdiMWNjYy00MDVlLTQ3NWEtYmE2My03MjJiNzVlYzEyMjU7Y19j
+YWxlbmRhciAsMTUsNTEsOTVkOGRkMGUtYzQyYS00ZGJmLWE3M2YtZGVkYWRmYjkyNDE3Ow==]]>
+	</property>
 	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWStyle" : "oneVIEWStyle"]]></template>
 	<style name="zebra">
 		<box rightPadding="0"/>
@@ -35,7 +40,6 @@
 		</parameter>
 		<parameter name="date" class="java.util.Date"/>
 		<parameter name="dayOfWeek" class="java.lang.String"/>
-		<parameter name="weekDay" class="java.lang.String"/>
 		<queryString>
 			<![CDATA[SELECT 
 org_area.name AS areaName, 
@@ -270,6 +274,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 	<field name="endDayOfWeek" class="java.lang.Integer"/>
 	<field name="brandLogo" class="java.io.InputStream"/>
 	<field name="dayOfWeek" class="java.lang.String"/>
+	<field name="weekDay" class="java.lang.String"/>
 	<title>
 		<band height="181" splitType="Stretch">
 			<textField>

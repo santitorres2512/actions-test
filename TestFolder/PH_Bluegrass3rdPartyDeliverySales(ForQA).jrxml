@@ -1,0 +1,3194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="PH_Bluegrass3rdPartyDeliverySales" language="groovy" pageWidth="2288" pageHeight="1000" whenNoDataType="NoPages" columnWidth="2248" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" uuid="baf20929-384e-4583-ae3e-34a14f54884d">
+	<property name="net.sf.jasperreports.export.xlsx.exclude.origin.band.pageFooter" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.row" value="6"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.column" value="E"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
+	<style name="zebra">
+		<box rightPadding="0"/>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{PAGE_COUNT}.intValue() % 2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#D4D4D4">
+				<box leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+			</style>
+		</conditionalStyle>
+	</style>
+	<subDataset name="3rdPartyDelivery" uuid="52d51285-ae00-4080-8fb2-e733187eb77d">
+		<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="369"/>
+		<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="626"/>
+		<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+		<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false">
+			<defaultValueExpression><![CDATA[$P{LoggedInUser}.getUsername()]]></defaultValueExpression>
+		</parameter>
+		<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+			<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+		</parameter>
+		<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+		</parameter>
+		<parameter name="storeIdsPH" class="java.util.List">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+		</parameter>
+		<parameter name="groupBy" class="java.lang.String">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
+		</parameter>
+		<parameter name="startDateFilter" class="java.lang.String"/>
+		<parameter name="endDateFilter" class="java.lang.String"/>
+		<parameter name="detail" class="java.lang.Boolean">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA[Boolean.FALSE]]></defaultValueExpression>
+		</parameter>
+		<parameter name="detailInsert" class="java.lang.String">
+			<defaultValueExpression><![CDATA[$P{detail} ? ", date" : ""]]></defaultValueExpression>
+		</parameter>
+		<queryString>
+			<![CDATA[SELECT
+ot.store_id AS store_id,
+ot.$P!{groupBy} AS groupName,
+ot.store_number AS storeNumber,
+ot.store_name As storeName,
+c_date.mysql_date AS `date`,
+SUM(COALESCE(sales.total_net_sales,0)) AS totalNetSales,
+SUM(COALESCE(sales.overflow_sales, 0)) AS occSales,
+SUM(COALESCE(sales.overflow_trans, 0)) AS occTrans,
+COALESCE(doorDashDrive.doorDashDrive, 0) AS doorDashSales,
+COALESCE(doorDashDrive.doorDashDriveTrans, 0) AS doorDashTrans,
+COALESCE(thirdPartySales.doorDashMarket, 0) AS doorDashMarketSales,
+COALESCE(thirdPartySales.doorDashMarketTrans, 0) AS doordashMarketTrans,
+COALESCE(thirdPartySales.uberEatsMarket, 0) AS uberEatsMarketSales,
+COALESCE(thirdPartySales.uberEatsMarketTrans, 0) AS uberEatsMarketTrans,
+COALESCE(thirdPartySales.grubHubSales, 0) AS grubHubSales,
+COALESCE(thirdPartySales.grubHubTrans, 0) AS grubHubTrans
+FROM org_tree ot
+JOIN org_brand brand ON (brand.brand_id = ot.brand_id AND brand.code = 'ph')
+JOIN c_store_access access ON (access.store_id = ot.store_id)
+JOIN c_user user ON (user.user_id = access.user_id AND user.username = $P{LoggedInUsername})
+JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
+JOIN agg_data_remote_orders sales ON (sales.store_id = ot.store_id AND sales.date = c_date.mysql_date)
+LEFT JOIN (
+  SELECT 
+  cs.store_id,
+  c_date.mysql_date AS date,
+  SUM(IF(header.account_number = "DOOR" AND delayed_payment_indicator = "Y", (header.tax_1/100 + header.tax_2/100 + header.tax_3/100 + header.gross_total_dollar/100) -  ((header.surprise_promo_dollar + header.employee_meal_dollar + header.coupon_total_dollar + header.discount_total_dollar + header.credit_total_dollar)/100), 0)) AS doorDashMarket,
+  SUM(IF(header.account_number = "DOOR" AND delayed_payment_indicator = "Y", 1, 0)) AS doorDashMarketTrans,
+  SUM(IF(header.account_number = "UBER" AND delayed_payment_indicator = "Y", (header.tax_1/100 + header.tax_2/100 + header.tax_3/100 + header.gross_total_dollar/100) -  ((header.surprise_promo_dollar + header.employee_meal_dollar + header.coupon_total_dollar + header.discount_total_dollar + header.credit_total_dollar)/100), 0)) AS uberEatsMarket,
+  SUM(IF(header.account_number = "UBER" AND delayed_payment_indicator = "Y", 1, 0)) AS uberEatsMarketTrans,
+  SUM(IF(header.account_number = "GRUB", (header.tax_1/100 + header.tax_2/100 + header.tax_3/100 + header.gross_total_dollar/100) -  ((header.surprise_promo_dollar + header.employee_meal_dollar + header.coupon_total_dollar + header.discount_total_dollar + header.credit_total_dollar)/100), 0)) AS grubHubSales, 
+  SUM(IF(header.account_number = "GRUB", 1, 0)) AS grubHubTrans
+  FROM c_store cs
+  JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
+  JOIN org_brand brand ON (brand.brand_id = cs.brand_id AND brand.code = 'ph')
+  JOIN c_store_access access ON (access.store_id = cs.store_id)
+  JOIN c_user user ON (user.user_id = access.user_id AND user.username = $P{LoggedInUsername})
+  JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
+  LEFT JOIN pos_sus_dssfv2_gc_header header ON (header.store_id = cs.store_id AND header.date = c_date.mysql_date)
+  WHERE $X{IN, cs.store_id, storeIdsPH}
+  GROUP BY store_id $P!{detailInsert}
+)thirdPartySales ON (thirdPartySales.store_id = ot.store_id AND thirdPartySales.date = c_date.mysql_date)
+LEFT JOIN (
+  SELECT 
+  cs.store_id,
+  c_date.mysql_date AS date,
+  SUM(drvpoll.total_amount)/100 AS doorDashDrive,
+  COUNT(*) AS doorDashDriveTrans
+  FROM c_store cs
+  JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
+  JOIN org_brand brand ON (brand.brand_id = cs.brand_id AND brand.code = 'ph')
+  JOIN c_store_access access ON (access.store_id = cs.store_id)
+  JOIN c_user user ON (user.user_id = access.user_id AND user.username = $P{LoggedInUsername})
+  JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
+  LEFT JOIN pos_sus_drvpoll_ticket drvpoll ON (drvpoll.store_id = cs.store_id AND drvpoll.date = c_date.mysql_date AND drvpoll.driver_id = 'OF1')
+  WHERE $X{IN, cs.store_id, storeIdsPH}
+  GROUP BY store_id $P!{detailInsert}
+)doorDashDrive ON (doorDashDrive.store_id = ot.store_id AND doorDashDrive.date = c_date.mysql_date)
+WHERE ot.in_reports = 1
+AND $X{IN, ot.store_id, storeIdsPH}
+GROUP BY groupName, storeNumber $P!{detailInsert}
+ORDER BY groupName, storeNumber $P!{detailInsert}]]>
+		</queryString>
+		<field name="store_id" class="java.lang.String"/>
+		<field name="groupName" class="java.lang.String"/>
+		<field name="storeNumber" class="java.lang.String"/>
+		<field name="storeName" class="java.lang.String"/>
+		<field name="date" class="java.util.Date"/>
+		<field name="totalNetSales" class="java.math.BigDecimal"/>
+		<field name="grubHubSales" class="java.math.BigDecimal"/>
+		<field name="grubHubTrans" class="java.math.BigDecimal"/>
+		<field name="uberEatsSales" class="java.math.BigDecimal"/>
+		<field name="uberEatsTrans" class="java.math.BigDecimal"/>
+		<field name="doorDashSales" class="java.math.BigDecimal"/>
+		<field name="doorDashTrans" class="java.math.BigDecimal"/>
+		<field name="occSales" class="java.math.BigDecimal"/>
+		<field name="occTrans" class="java.math.BigDecimal"/>
+		<field name="doorDashMarketSales" class="java.math.BigDecimal"/>
+		<field name="doordashMarketTrans" class="java.math.BigDecimal"/>
+		<field name="uberEatsMarketSales" class="java.math.BigDecimal"/>
+		<field name="uberEatsMarketTrans" class="java.math.BigDecimal"/>
+		<variable name="grandTotalNetSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{totalNetSales}]]></variableExpression>
+		</variable>
+		<variable name="totalNetSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{totalNetSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{doorDashTrans}== null || $F{doorDashTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{doorDashSales}.divide($F{doorDashTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{doorDashTotalTransactions}== null || $V{doorDashTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashTotalSales}.divide($V{doorDashTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{doorDashGrandTotalTransactions}== null || $V{doorDashGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashGrandTotalSales}.divide($V{doorDashGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{doorDashSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubSales}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTrans}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubSales}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTrans}]]></variableExpression>
+		</variable>
+		<variable name="grubHubCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{grubHubTrans}== null || $F{grubHubTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{grubHubSales}.divide($F{grubHubTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{grubHubTotalTransactions}== null || $V{grubHubTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{grubHubTotalSales}.divide($V{grubHubTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grubHubGrandTotalTransactions}== null || $V{grubHubGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{grubHubGrandTotalSales}.divide($V{grubHubGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{grubHubSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{grubHubTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{grubHubGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashMarketSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doordashMarketTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashMarketSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doordashMarketTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{doordashMarketTrans}== null || $F{doordashMarketTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{doorDashMarketSales}.divide($F{doordashMarketTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{doorDashMarketTotalTransactions}== null || $V{doorDashMarketTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashMarketTotalSales}.divide($V{doorDashMarketTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{doorDashMarketGrandTotalTransactions}== null || $V{doorDashMarketGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashMarketGrandTotalSales}.divide($V{doorDashMarketGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{doorDashMarketSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashMarketTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashMarketGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsMarketSales}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsMarketTrans}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsMarketSales}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsMarketTrans}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{uberEatsMarketTrans}== null || $F{uberEatsMarketTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{uberEatsMarketSales}.divide($F{uberEatsMarketTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{uberEatsMarketTotalTransactions}== null || $V{uberEatsMarketTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : $V{uberEatsMarketTotalSales}.divide($V{uberEatsMarketTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{uberEatsMarketGrandTotalTransactions}== null || $V{uberEatsMarketGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{uberEatsMarketGrandTotalSales}.divide($V{uberEatsMarketGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{uberEatsMarketSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{uberEatsMarketTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{uberEatsMarketGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="occTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{occSales}]]></variableExpression>
+		</variable>
+		<variable name="occTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{occTrans}]]></variableExpression>
+		</variable>
+		<variable name="occGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{occSales}]]></variableExpression>
+		</variable>
+		<variable name="occGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{occTrans}]]></variableExpression>
+		</variable>
+		<variable name="occCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{occTrans}== null || $F{occTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{occSales}.divide($F{occTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="occTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{occTotalTransactions}== null || $V{occTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : $V{occTotalSales}.divide($V{occTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="occGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{occGrandTotalTransactions}== null || $V{occGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? null : $V{occGrandTotalSales}.divide($V{occGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="occNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{occSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="occTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{occTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="occGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{occGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="thirdPartySales" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{grubHubSales}.add($F{doorDashSales}).add($F{occSales}).add($F{doorDashMarketSales}).add($F{uberEatsMarketSales})]]></variableExpression>
+		</variable>
+		<variable name="thirdPartySalesTotal" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$V{thirdPartySales}]]></variableExpression>
+		</variable>
+		<variable name="thirdPartySalesGrandTotal" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$V{thirdPartySales}]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTrans" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[$F{grubHubTrans}.add($F{doorDashTrans}).add($F{occTrans}).add($F{doordashMarketTrans}).add($F{uberEatsMarketTrans})]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTransTotal" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$V{thirdPartyTrans}]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTransGrandTotal" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$V{thirdPartyTrans}]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{thirdPartyTrans}== null || $V{thirdPartyTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{thirdPartySales}.divide($V{thirdPartyTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{thirdPartyTransTotal}== null || $V{thirdPartyTransTotal}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{thirdPartySalesTotal}.divide($V{thirdPartyTransTotal}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{thirdPartyTransGrandTotal}== null || $V{thirdPartyTransGrandTotal}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{thirdPartySalesGrandTotal}.divide($V{thirdPartyTransGrandTotal}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{thirdPartySales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{thirdPartySalesTotal}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{thirdPartySalesGrandTotal}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="totalNetSalesStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{totalNetSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalSalesStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalTransactionsStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalCheckAverageStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{doorDashTotalTransactions}== null || $V{doorDashTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashTotalSales}.divide($V{doorDashTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalNetSalesPctStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalSalesStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashMarketSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalTransactionsStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{doordashMarketTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalCheckAverageStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{doorDashMarketTotalTransactions}== null || $V{doorDashMarketTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashMarketTotalSales}.divide($V{doorDashMarketTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashMarketTotalNetSalesPctStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashMarketTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalSalesStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubSales}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalTransactionsStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTrans}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalCheckAverageStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{grubHubTotalTransactions}== null || $V{grubHubTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{grubHubTotalSales}.divide($V{grubHubTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalNetSalesPctStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{grubHubTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalSalesStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsMarketSales}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalTransactionsStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsMarketTrans}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalCheckAverageStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{uberEatsMarketTotalTransactions}== null || $V{uberEatsMarketTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : $V{uberEatsMarketTotalSales}.divide($V{uberEatsMarketTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsMarketTotalNetSalesPctStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{uberEatsMarketTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="occTotalSalesStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{occSales}]]></variableExpression>
+		</variable>
+		<variable name="occTotalTransactionsStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$F{occTrans}]]></variableExpression>
+		</variable>
+		<variable name="occTotalCheckAverageStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{occTotalTransactions}== null || $V{occTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : $V{occTotalSales}.divide($V{occTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="occTotalNetSalesPctStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{occTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="thirdPartySalesTotalStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$V{thirdPartySales}]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTransTotalStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2" calculation="Sum">
+			<variableExpression><![CDATA[$V{thirdPartyTrans}]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTotalCheckAverageStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{thirdPartyTransTotal}== null || $V{thirdPartyTransTotal}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{thirdPartySalesTotal}.divide($V{thirdPartyTransTotal}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="thirdPartyTotalNetSalesPctStore" class="java.math.BigDecimal" resetType="Group" resetGroup="Group2">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{thirdPartySalesTotal}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<group name="Group1">
+			<groupExpression><![CDATA[$F{groupName}]]></groupExpression>
+		</group>
+		<group name="Group2">
+			<groupExpression><![CDATA[$F{storeNumber}]]></groupExpression>
+		</group>
+	</subDataset>
+	<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+	<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getUsername()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="storeIdsPH" class="java.util.List" nestedType="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="groupBy" class="java.lang.String">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateFormatted" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{startDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateFormatted" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{endDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="WeekDatesPH" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateFilter" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[(($P{WeekDatesPH} != null)? $P{WeekDatesPH} :
+$P{startDateFormatted})]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[(($P{WeekDatesPH} != null)? new java.lang.String(  "(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='ph') WHERE date > " + $P{WeekDatesPH} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='ph') WHERE date > " + $P{WeekDatesPH} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1))))") :
+($P{endDateFormatted}))]]></defaultValueExpression>
+	</parameter>
+	<parameter name="detail" class="java.lang.Boolean">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[Boolean.FALSE]]></defaultValueExpression>
+	</parameter>
+	<parameter name="detailInsert" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{detail} ? ", date" : ""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT 
+
+DATE($P!{startDateFilter}) AS startDate,
+DATE($P!{endDateFilter}) AS endDate
+
+ FROM dual]]>
+	</queryString>
+	<field name="startDate" class="java.util.Date"/>
+	<field name="endDate" class="java.util.Date"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="76" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="43" width="2248" height="33" uuid="e3ef2b66-6589-412f-8cdd-fac3a013cb89">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["PH 3rd Party Delivery Sales"]]></textFieldExpression>
+			</textField>
+			<image onErrorType="Blank">
+				<reportElement key="image-2" x="0" y="0" width="190" height="43" uuid="d6f8fb4b-51ad-4e61-b4c2-c66b2454cd0e"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<graphicElement>
+					<pen lineWidth="0.0" lineStyle="Solid"/>
+				</graphicElement>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "OdsLogo137x37.jpg"]]></imageExpression>
+			</image>
+			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
+				<reportElement x="2170" y="0" width="78" height="21" uuid="7292d94b-d0aa-402c-b49d-05225da819f5">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{startDate}]]></textFieldExpression>
+			</textField>
+			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
+				<reportElement x="2170" y="21" width="78" height="22" uuid="5771a706-25ac-4398-a275-6b603fc2c3b6">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{endDate}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="2090" y="0" width="80" height="21" uuid="dbf22155-c35f-4222-a754-f4ac9c4a9af5">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Start Date"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="2090" y="21" width="80" height="22" uuid="1543b14c-e483-4fdc-9d27-90dfdc07d39f">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["End Date"]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="152" splitType="Stretch">
+			<componentElement>
+				<reportElement positionType="Float" x="0" y="0" width="2248" height="152" uuid="d170075d-3b3f-4ad3-b8ec-399b297ed3ca">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="3rdPartyDelivery" uuid="db86434e-4f57-42fa-a423-e64ae59b37f5">
+						<datasetParameter name="LoggedInUsername">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUsername}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="startDateFilter">
+							<datasetParameterExpression><![CDATA[$P{startDateFilter}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="endDateFilter">
+							<datasetParameterExpression><![CDATA[$P{endDateFilter}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="groupBy">
+							<datasetParameterExpression><![CDATA[$P{groupBy}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="storeIdsPH">
+							<datasetParameterExpression><![CDATA[$P{storeIdsPH}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="detail">
+							<datasetParameterExpression><![CDATA[$P{detail}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="detailInsert">
+							<datasetParameterExpression><![CDATA[$P{detailInsert}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:columnGroup width="2248" uuid="6ebfceb8-ad74-4380-b03e-115a1cb80984">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [28]"/>
+						<jr:groupHeader groupName="Group1">
+							<jr:cell style="Table_CH" height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="0" y="0" width="340" height="20" uuid="264f7ff0-dbed-4b2d-b14c-457f4ddc8f10"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{groupName}]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="340" y="0" width="320" height="20" uuid="61441ef2-e37b-43f0-8621-4ac57910e6de"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="660" y="0" width="320" height="20" uuid="67279c4f-d1c2-452a-9890-972bc9e662f4"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="1616" y="0" width="316" height="20" uuid="fdcd35f8-cd6c-44cc-9b63-6d0b3d7d4c38">
+										<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									</reportElement>
+									<box leftPadding="4">
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="980" y="0" width="320" height="20" uuid="a694c3dd-cf6a-40d2-a788-6a2213d32c59">
+										<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									</reportElement>
+									<box leftPadding="4">
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="1300" y="0" width="316" height="20" uuid="b908fd4f-b800-43e3-8c3f-922da90b01a1">
+										<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									</reportElement>
+									<box leftPadding="4">
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" positionType="Float" x="1932" y="0" width="316" height="20" uuid="f591a2d4-3cbe-4ebe-bf2d-30d6135abfb1">
+										<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									</reportElement>
+									<box leftPadding="4">
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:columnHeader height="20" rowSpan="1">
+							<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+							<property name="com.jaspersoft.studio.unit.height" value="px"/>
+							<textField>
+								<reportElement style="Column" positionType="Float" mode="Opaque" x="980" y="0" width="320" height="20" forecolor="#000000" backcolor="#85DE97" uuid="a6cbd033-d7c6-4757-8e83-0961c38f5bcc">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["GRUBHUB"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" positionType="Float" mode="Opaque" x="660" y="0" width="320" height="20" forecolor="#000000" backcolor="#EEF090" uuid="7543a597-cf04-4cc0-9b3d-3f63a5ea5de3">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["DOORDASH MARKET"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" positionType="Float" mode="Opaque" x="340" y="0" width="320" height="20" forecolor="#000000" backcolor="#F7B7EC" uuid="3938404c-3b21-4023-a6d4-d7d5e668a9a8">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["DOORDASH DRIVE"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" positionType="Float" stretchType="RelativeToTallestObject" mode="Opaque" x="1300" y="0" width="316" height="20" forecolor="#000000" backcolor="#BF8CFA" uuid="87344fb1-e3e8-400f-b8ef-cea9d721b328">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["UBEREATS MARKET"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" positionType="Float" stretchType="RelativeToTallestObject" mode="Opaque" x="1616" y="0" width="316" height="20" forecolor="#000000" backcolor="#FCCA79" uuid="57c4f882-bb7e-47a2-928e-8a581509cae8">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["OCC"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" positionType="Float" stretchType="RelativeToTallestObject" mode="Opaque" x="1932" y="0" width="316" height="20" forecolor="#000000" backcolor="#D1D1D1" uuid="d7bc6718-b339-47a4-9528-c871d8d81865">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["3RD PARTY TOTALS"]]></textFieldExpression>
+							</textField>
+						</jr:columnHeader>
+						<jr:column width="100" uuid="fa39ee5a-b0a8-47d0-97a4-f82c11524a04">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="100" height="20" uuid="8ebec118-f1d8-4fcd-b7da-8cc771d9ae3c">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["REPORT TOTALS"]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="100" height="22" uuid="9f50e7ee-db9e-4e92-a25a-8232c60071fb"/>
+										<box>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement>
+											<font size="10"/>
+										</textElement>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="100" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="160cb80b-0193-4c5c-bcba-ff7dd74017e5">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement>
+											<font size="10"/>
+										</textElement>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="100" height="30" uuid="ec3b8f98-20a4-43de-8a06-3e043b2f15b4"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Store Number"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="100" height="20" uuid="2ffd3808-a379-469a-a934-c2a263bf85ad"/>
+									<box leftPadding="4">
+										<pen lineWidth="0.0"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{storeNumber}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="90" uuid="f4803cba-b416-41d3-9e91-fa067b3138d1">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="90" height="20" uuid="19f6aa61-16f3-4b3b-91db-59e762c85e59">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="90" height="22" uuid="7e14dd43-78ee-4d47-84d2-4dd8152bfc4d"/>
+										<box>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement>
+											<font size="10"/>
+										</textElement>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="90" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="fb397d42-1c8f-48ac-a548-cde7c8da7071">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement>
+											<font size="10"/>
+										</textElement>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="90" height="30" uuid="d776f9c8-7cbd-4a23-b106-a7467f840342"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Store Name"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="90" height="20" uuid="cd055a73-7e82-4f21-bee3-7891568661b9"/>
+									<box leftPadding="4">
+										<pen lineWidth="0.0"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{storeName}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="70" uuid="33240f29-6e9d-46d1-ad6f-2c98b41015d0">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="70" height="20" uuid="9e4601b4-56e4-4214-981a-63a8a7e59a09">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="70" height="22" uuid="2a58677a-0ff8-42b5-ad5a-10ee09ee414a"/>
+										<box leftPadding="0" rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Totals"]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="70" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="cf8f1bda-850a-44fb-965d-92613e09aaf0">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box leftPadding="0" rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Store Totals"]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="70" height="30" uuid="7b9183a0-b947-405e-a578-b0372815a5c0"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Date"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="70" height="20" uuid="6c9ee507-68f1-4197-9ad0-f171a39e7160"/>
+									<box leftPadding="4">
+										<pen lineWidth="0.0"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Left" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$P{detail} ? $F{date} : ""]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="b6460f9d-6c9c-4f31-b3d3-6ffb4f66f290">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="3ddd758e-410f-4236-a2d4-95aa67aa2a49">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grandTotalNetSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="9d00de4b-581f-4815-934c-6ea91f0ca417"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{totalNetSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="71b1c79b-6e6d-4588-9469-b3db732f669e">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{totalNetSalesStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="30" uuid="8964a7be-8281-4fe4-819d-24b1f4137dcc"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Total\nNet Sales \$"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="79658f28-5d61-4906-8bdc-f432fd08233e"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{totalNetSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="5e0305c5-d8b8-471b-aa05-8f044dfbb517">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="20" uuid="f4b66e70-4fb1-487f-ba28-b900f60b6d1e">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="280f5835-d2bf-4ce7-8ff5-76e3c856f8ad"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group2" uuid="dcbef804-55cd-44f7-bf6e-86e9cbd4cf06">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalSalesStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="5d796d7e-37ec-49c5-aa2f-057c8e1d2394"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" forecolor="#000000" uuid="da007aa0-ac72-44bc-b4b7-60079bf999ed"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="2cf18bf6-75f6-4085-b9a5-e19a409ed004">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="20" uuid="6d4748d9-7af4-403c-9203-3f698c592bd0">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="dbd12729-e3e8-4b70-9741-45224c1784b8"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="6cc9c509-1fc5-45e2-9190-ab7d429b0fce">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalTransactionsStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="7ca4232d-9469-486b-9821-d18495d22c09"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transactions"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" forecolor="#000000" uuid="9b3b4030-99c7-46df-98aa-71c9760ee19e"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashTrans}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="742d0a08-4a57-458c-b9c6-d7ddf57d52d4">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="20" uuid="481a1e63-910a-49d2-86ff-ba26540dacc5">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="7e0ae88a-b968-44c3-8ea9-b82fb176295c"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="a7d6b086-7f6f-4fad-9708-a4aa71411e22">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalCheckAverageStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="905f8494-b7b8-48e6-8117-a55d2ad92acc"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+										<paragraph lineSpacing="Single"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="8eb74690-9879-427a-9b1c-2074adc8fca7"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{doorDashCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="64e523ca-e92e-4978-ab7f-902573b992ea">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="20" uuid="57d51d04-b5e9-4e69-a2a9-2a896c163da8">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="c45a5247-7a93-42ff-9bd6-965882a8ad0e"/>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="87f27340-eb03-4432-9e47-854e016c4d53">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalNetSalesPctStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="46dcbc3a-bffe-4936-b9ba-8ebb8215791e"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="b1a8500f-bcf9-4cc2-a981-66cebc0b13a8"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{doorDashNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="931bcdc2-a9f7-4f5c-a512-656b3a384f3a">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="4b8b2d3f-0d6e-43ad-9f9d-ec4ae161112b">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashMarketGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="1dad98e0-6256-4dd8-a23c-1966582f8068"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="54349517-746c-4fb7-9c4c-2b3324b71434">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalSalesStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#EEF090" uuid="41b2151d-9315-45d1-8d67-d635ccb71c2c"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" forecolor="#000000" uuid="5f211d28-1803-4029-990e-7b426ec04ad9"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashMarketSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="7f415c44-1c72-46bc-b6e8-c7bcc857d7ff">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="eb7f9ae3-5b39-4419-9340-b7d7e8fcb534">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashMarketGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="b087b988-9697-4731-8ddd-70e19e83bfd3"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="cbcbcb73-214d-4034-a7fa-386a31ec8d08">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalTransactionsStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#EEF090" uuid="ac9acd4a-77b2-4b8e-a140-ab745a494488"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transactions"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" forecolor="#000000" uuid="827fe870-bcd4-49fd-980a-9b02263bd645"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doordashMarketTrans}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="d24ace43-1af6-4f19-b56c-1f6f5db31d3d">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="93313090-37f7-469b-8b44-e7107e0e862f">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashMarketGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="e9c982d5-f896-4bce-8bff-a22d53319300"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="4019ddd9-b77b-46ac-95b5-02d9858d75af">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalCheckAverageStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#EEF090" uuid="bb121d8c-9704-4581-953d-932f6ad42714"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="f35af157-91a2-4b47-8e16-2fc9f0ce5878"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{doorDashMarketCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="6bdb85b7-f0d4-4d7b-bbb4-53c6c3c80b00">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column12"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="b70099a7-a999-47f6-b86c-36875758a76c">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashMarketGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="5b9c6279-bb90-4ee6-adc2-d017a0706d98"/>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="f00984c2-0b11-4468-9b8f-215e47885528">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashMarketTotalNetSalesPctStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#EEF090" uuid="89260d02-4d26-44a4-a909-84f8d44f1956"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="ec40e8a6-fbda-49de-ae18-b7b51553945e"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{doorDashMarketNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="4bd9b402-daec-49eb-ad01-b2155b798e01">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column13"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="a7e0a039-86c6-4046-ae47-d87661e750d8">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="736cd139-511c-44dd-b6fb-4efe8eb58005"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="534df344-5397-47c3-b7b5-a68f834401f1">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalSalesStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="4658b8d1-85e0-4bc2-ab12-7d033f511639"/>
+									<box>
+										<leftPen lineWidth="0.0"/>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" forecolor="#000000" uuid="99174fbc-5639-473a-8e5a-84fa611273bb"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grubHubSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="2ede37c5-4beb-42e6-8f9e-2ca452115b96">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column14"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<box>
+									<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+								</box>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="8be4fca3-43d6-4a56-90a4-7e493c740a68">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="00395b28-d97d-4610-8f3e-45cbd935bbd4"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="822795cb-3538-4bc5-b537-9075a407be6f">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalTransactionsStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="7e61c4ea-da66-49c0-b767-742ba699149c"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transactions"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" forecolor="#000000" uuid="50b9433e-7b8d-442b-9fad-b25fb85e2ec8"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grubHubTrans}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="d1127749-bd51-4b58-8851-bfdc3a3351ad">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column15"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="2da9b8c8-cb87-4830-8f06-3c2ac6b8c8ea">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="dda0aadc-07a7-40d9-9ca5-9d8d81c64dba"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="e1409481-ac86-4875-8c57-12d170fe8204">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalCheckAverageStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="6109f371-a933-428c-80b3-76cfe43f1a82"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="156af561-3baf-401f-a4c6-d4d66dbed497"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{grubHubCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="5dcdfb01-b8c3-4fe3-9d5b-0247233508f0">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column16"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" x="0" y="0" width="80" height="20" uuid="7aacc515-8392-48af-bcd8-1eb4b433d3b6">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<pen lineWidth="0.0"/>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" uuid="575e988b-cfdd-4d9c-8b90-c3716bf0ba9e"/>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="ae91eea9-4d69-4db9-8a99-a24604ab859c">
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalNetSalesPctStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="fc31bac2-e960-4c5d-8503-8f66a31b9aa5"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" uuid="ae075f28-ba3d-48a4-9b69-bf1a953f6d18"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{grubHubNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="7b773739-6959-449e-b3fb-55e62f34a346">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column17"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="f10443d8-16cf-408a-8797-f1bd3f277e7a">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsMarketGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" printWhenGroupChanges="Group1" uuid="dc97a71a-81fe-4503-b1c1-717cc3f7843b">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="e1683740-9fca-4250-8b69-2aeac4c36ba4">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalSalesStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#050505" backcolor="#BF8CFA" uuid="c6179b27-1b80-49b4-b028-a64a908e77a3">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="ee7be619-3035-4258-8650-054bf5c4f82d">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{uberEatsMarketSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="78" uuid="b4ed2f50-a074-4c98-822d-d468da53f5b0">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column18"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="dc7f4d30-2b31-49d6-afdf-8f4ae2e14a7e">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsMarketGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="78" height="22" printWhenGroupChanges="Group1" uuid="41a84ba2-6829-45db-9fc0-16dc5daba040">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="78" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="ad115d60-50bd-40da-a854-b369b6f34d31">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalTransactionsStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="78" height="30" forecolor="#050505" backcolor="#BF8CFA" uuid="a31826f1-3989-4630-a2c2-1ad80be2c7d1"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transcations"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="6c556f91-d01f-4ff4-bd7d-0a7e823555f1">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{uberEatsMarketTrans}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="376094a4-1c7e-4bf5-ade2-feaf9473e0e9">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column19"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="7a7cc717-314a-430b-b6f3-2638115b8191">
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsMarketGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" printWhenGroupChanges="Group1" uuid="9d2f6126-fa0d-46d9-844b-0996c91a469b">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="6b29a35d-8372-4799-8aa7-533fdb43f407">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalCheckAverageStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#050505" backcolor="#BF8CFA" uuid="a4ac6334-6fcf-47e4-82cb-4deb7478e4b2"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="7ab93e5e-fccf-4603-af4e-1f935f2f2bdf">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{uberEatsMarketCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="78" uuid="faab64e0-0e4d-479c-8c56-7e26b494c213">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column20"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="5ca5d4a3-da66-4b9c-9582-b482b99410e7">
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsMarketGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="78" height="22" printWhenGroupChanges="Group1" uuid="db6a585c-e373-4620-8b21-f6f6cac982cb">
+											<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<rightPen lineWidth="1.0"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font fontName="SansSerif" size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="78" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="35a83a88-a420-48b6-944e-82344f7a5b5b">
+											<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<rightPen lineWidth="1.0"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font fontName="SansSerif" size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsMarketTotalNetSalesPctStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="78" height="30" forecolor="#050505" backcolor="#BF8CFA" uuid="5e3b64c2-8b3e-48b1-b50c-eb1cc8d40e15"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="c21585cb-8234-47cf-8096-146e2d21f46e">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsMarketNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="dd5edebf-c584-4c63-aca9-6769032af565">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column21"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="ca5c5c87-7c1b-4195-b3fd-47101d96fff5">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{occGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" printWhenGroupChanges="Group1" uuid="c16c86a9-8033-48f4-a320-ecbfbac4f19a">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="8d076859-b85c-4f90-ad40-333174d32670">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalSalesStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#050505" backcolor="#FCCA79" uuid="9afbdeaa-514d-4021-80d2-5d767e0e89f7">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="e1905881-15c3-4da7-9f78-a493e9eab0fc">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{occSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="78" uuid="f7ff857b-1ed2-4025-9b6f-fd98362cb079">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column22"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="120d8240-96f2-4e45-8e48-18de79497abc">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{occGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="78" height="22" printWhenGroupChanges="Group1" uuid="1bd017b0-4bd3-4f55-b0e3-29a59fe139e9">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="78" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="2dbadb59-cbb0-4e86-ae0b-21c99577a6f5">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalTransactionsStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="78" height="30" forecolor="#050505" backcolor="#FCCA79" uuid="22a09efd-c9c1-4657-bd58-bc07edaff72d"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transcations"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="f419c70a-625c-427a-946f-0e7df21f847b">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{occTrans}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="f74dcbad-f3e7-4999-9f4f-202882616286">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column23"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="6cebe65c-5df6-4ca9-a128-6a54236bb804">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{occGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" printWhenGroupChanges="Group1" uuid="9857ee1e-4b3a-4c5a-8714-1ac0e0e5c4b5">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="eba52197-8cbc-4eed-b990-5e6039705f01">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalCheckAverageStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#050505" backcolor="#FCCA79" uuid="17011be1-7bd1-45e2-820f-7e32d94293af"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="c76e7408-09af-4396-bac9-bd0a3534a506">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{occCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="78" uuid="86dd377d-6c4a-48c1-90ed-b08708635451">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column24"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="5b62f558-f231-44b7-a4c4-da5ce70fe97f">
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{occGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="78" height="22" printWhenGroupChanges="Group1" uuid="34fc8eac-75ab-43fd-a899-1ab35918a834">
+											<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<rightPen lineWidth="1.0"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font fontName="SansSerif" size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="78" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="649a527f-2b5a-41d3-9225-63850c5f8f57">
+											<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<rightPen lineWidth="1.0"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font fontName="SansSerif" size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{occTotalNetSalesPctStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="78" height="30" forecolor="#050505" backcolor="#FCCA79" uuid="3acaf2a1-ed1e-4526-b8d9-dd25a5acc71b"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="5a2f24bb-86f6-4e7d-b327-2525891a23c2">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{occNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="f1440f59-6c67-4513-8760-847158ada4a7">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column25"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="e96fa854-4257-4122-87e1-c73cebee4f24">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{thirdPartySalesGrandTotal}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" printWhenGroupChanges="Group1" uuid="7ba312cb-5d51-4149-a947-38fb0b8eb208">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartySalesTotal}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="2b593bb8-e6be-44a4-b7c0-4aead98ddbcb">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartySalesTotalStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#050505" backcolor="#D1D1D1" uuid="08aa6f39-bebb-419f-9ec8-8a8aacc87b48">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="b10829cd-5846-4f0f-a334-d1d0871db5a2">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{thirdPartySales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="78" uuid="ef41e46e-6b66-4234-a627-071080a6d291">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column26"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="0fd91285-030f-46b0-b04f-2e87d81669bb">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{thirdPartyTransGrandTotal}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="78" height="22" printWhenGroupChanges="Group1" uuid="1e469a9e-6a4a-4093-b665-104c29ffc54e">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartyTransTotal}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="78" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="ebef0742-ad4d-4346-af52-4c1f2df8c21e">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartyTransTotalStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="78" height="30" forecolor="#050505" backcolor="#D1D1D1" uuid="b72273a6-317f-4807-951a-b3777857b2c1"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transcations"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="0f08c158-a4eb-401b-81bb-ab7732317be8">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{thirdPartyTrans}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="17816db2-8cf1-4cf8-93b5-aef669bf2e12">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column27"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="a3fd9778-c152-4074-b1a8-22272077df8d">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{thirdPartyGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="80" height="22" printWhenGroupChanges="Group1" uuid="de4a6353-cf8b-4d1d-993e-997949a4c95d">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartyTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="80" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="4e3d2d18-7973-436b-af4c-8e8ea641d213">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartyTotalCheckAverageStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#050505" backcolor="#D1D1D1" uuid="5c6e351e-c566-449a-beeb-df8ce8bf3814"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="80" height="20" printWhenGroupChanges="Group1" uuid="80884143-6960-43a1-86a3-359840825258">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4"/>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{thirdPartyCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="78" uuid="214da8ae-e813-4150-a36e-ed2ea5d2923b">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column28"/>
+							<jr:tableFooter height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement key="" style="Column" positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="dc514ca1-d986-4c00-8683-9eff4b96de12">
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</reportElement>
+									<box rightPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{thirdPartyGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Group" positionType="Float" x="0" y="0" width="78" height="22" printWhenGroupChanges="Group1" uuid="850f2106-64a8-4787-b457-cd960ff90730">
+											<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<rightPen lineWidth="1.0"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font fontName="SansSerif" size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartyTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell height="20" rowSpan="1">
+									<textField pattern="#,##0.0" isBlankWhenNull="true">
+										<reportElement style="Detail" positionType="Float" x="0" y="0" width="78" height="20" isRemoveLineWhenBlank="true" printWhenGroupChanges="Group2" uuid="d1f4f522-10e8-4014-aec6-4f33dbe19f75">
+											<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+											<printWhenExpression><![CDATA[$P{groupBy} != "store_number" && $P{detail} == true]]></printWhenExpression>
+										</reportElement>
+										<box rightPadding="4">
+											<rightPen lineWidth="1.0"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font fontName="SansSerif" size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{thirdPartyTotalNetSalesPctStore}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" positionType="Float" mode="Opaque" x="0" y="0" width="78" height="30" forecolor="#050505" backcolor="#D1D1D1" uuid="f4c602d8-b246-4b08-8740-86e615be6f95"/>
+									<box leftPadding="0"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.0" isBlankWhenNull="true">
+									<reportElement positionType="Float" x="0" y="0" width="78" height="20" printWhenGroupChanges="Group1" uuid="34f26595-5677-4f26-a8f4-4de5f2664ba1">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+										<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+									</reportElement>
+									<box rightPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font fontName="SansSerif" size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{thirdPartyNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:columnGroup>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="44" splitType="Stretch">
+			<textField evaluationTime="Report" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="2170" y="20" width="78" height="24" uuid="3ddf5470-9275-474c-9221-e8c402d5ac9f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="2090" y="20" width="80" height="24" uuid="1ef0d1f5-bf83-4a81-9d0a-7e81a3f4e31a"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-13" x="100" y="0" width="90" height="24" uuid="00b59076-fb12-4309-99c2-bc3c8b579357"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{LoggedInUserFullName} == null ? "Unknown" : $P{LoggedInUserFullName}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-12" x="0" y="0" width="100" height="24" uuid="5028a844-1f44-4081-85f8-e6f3c2690519">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Report By:"]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd yyyy hh:mma" isBlankWhenNull="true">
+				<reportElement x="0" y="24" width="190" height="20" uuid="4438d797-bf9a-40e1-b3ea-808544a7943e"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="24">
+			<staticText>
+				<reportElement key="staticText-16" x="0" y="0" width="2248" height="24" uuid="11e2ea8b-8e00-436c-ab22-ae957fbd5595">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[No data for current selections]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

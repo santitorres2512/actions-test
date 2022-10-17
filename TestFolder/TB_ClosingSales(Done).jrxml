@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_ClosingSales" language="groovy" pageWidth="1240" pageHeight="1000" whenNoDataType="AllSectionsNoDetail" columnWidth="1200" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" uuid="0817241c-9d6f-450b-a651-51a83721769f">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_ClosingSales" language="groovy" pageWidth="1240" pageHeight="500" whenNoDataType="AllSectionsNoDetail" columnWidth="1200" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" uuid="0817241c-9d6f-450b-a651-51a83721769f">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWStyle" : "oneVIEWStyle"]]></template>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWStyle" : "oneVIEWStyle.jrtx"]]></template>
 	<style name="zebra">
 		<box rightPadding="0"/>
 		<conditionalStyle>
@@ -23,7 +31,27 @@
 		</conditionalStyle>
 		<conditionalStyle>
 			<conditionExpression><![CDATA[$F{lostHours} > 0]]></conditionExpression>
-			<style mode="Opaque" forecolor="#000000" backcolor="#FA980F"/>
+			<style mode="Opaque"/>
+		</conditionalStyle>
+	</style>
+	<style name="lostHoursStyleArea" style="Group 1 Footer">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_areaGroup} < -30]]></conditionExpression>
+			<style backcolor="#FA2723"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_areaGroup} > 0]]></conditionExpression>
+			<style mode="Opaque"/>
+		</conditionalStyle>
+	</style>
+	<style name="lostHoursStyleRegion" style="Group 1 Footer">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_regionGroup} < -30]]></conditionExpression>
+			<style backcolor="#FA2723"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_regionGroup} > 0]]></conditionExpression>
+			<style mode="Opaque"/>
 		</conditionalStyle>
 	</style>
 	<subDataset name="ClosingSalesDataset" uuid="4750145e-5a3a-44d6-8e06-25e6bd60f058">
@@ -34,81 +62,54 @@
 			<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
 		</parameter>
 		<parameter name="date" class="java.util.Date"/>
-		<parameter name="dayOfWeek" class="java.lang.String"/>
-		<parameter name="weekDay" class="java.lang.String"/>
 		<queryString>
 			<![CDATA[SELECT 
-org_area.name AS areaName, 
-org_region.name AS regionName, 
-cs.store_number AS storeNumber, 
-cs.store_name AS storeName,
-info.store_open_$P!{weekDay} AS openingTime, 
-info.store_close_$P!{weekDay} AS closingTime, 
-storeTotals.lastSale,
-storeTotals.lostHours,
-storeTotals.last30Count,
-storeTotals.last60Count,
-storeTotals.last120Count,
-storeTotals.last30Dollars,
-storeTotals.last60Dollars,
-storeTotals.last120Dollars
-FROM c_store cs 
-JOIN org_brand ON (org_brand.brand_id = cs.brand_id AND org_brand.code = 'tb')
-JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
-JOIN org_area ON (org_area.area_id = cs.area_id)
-JOIN org_region ON (org_region.region_id = cs.region_id)
-JOIN c_store_access ON (c_store_access.store_id = cs.store_id) 
+ot.area AS areaName, 
+ot.region AS regionName, 
+ot.store_number AS storeNumber, 
+ot.store_name AS storeName,
+IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_open_mon,info.store_open_sat) AS openingTime, 
+IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_close_mon,info.store_close_sat) AS closingTime, 
+MAX(TIME(header.begin_date_time)) AS lastSale,
+CONCAT('',TIMEDIFF(MAX(TIME(header.begin_date_time)), IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_close_mon,TIME(info.store_close_sat)))) AS lostHours,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, 1, 0)
+ )) AS last30Count,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, 1, 0)
+ )) AS last60Count,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, 1, 0)
+ )) AS last120Count,
+ SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last30Dollars,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last60Dollars,
+ SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last120Dollars
+FROM org_tree ot 
+JOIN org_brand ON (org_brand.brand_id = ot.brand_id AND org_brand.code = 'tb')
+JOIN c_store_info info ON (info.store_id = ot.store_id AND info.in_reports = 1)
+JOIN c_date ON $X{EQUAL, c_date.mysql_date, date} 
+JOIN pos_taco_transaction_header header ON (header.store_id = ot.store_id AND header.date = c_date.mysql_date)
+JOIN c_store_access ON (c_store_access.store_id = ot.store_id) 
 JOIN c_user ON (c_user.user_id = c_store_access.user_id AND c_user.username = $P{LoggedInUsername})
-LEFT JOIN (
-	SELECT
-	ticketDetail.store_id,
-	MAX(TIME(ticketDetail.ticketTime)) AS lastSale,
-	ROUND(TIME_TO_SEC(TIMEDIFF(MAX(TIME(ticketDetail.ticketTime)),info.store_close_$P!{weekDay}))/60) AS lostHours,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, 1, 0)
-	 )) AS last30Count,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, 1, 0)
-	 )) AS last60Count,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, 1, 0)
-	 )) AS last120Count,
-	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 0)
-	 )) AS last30Dollars,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 0)
-	 )) AS last60Dollars,
-	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 0)
-	 )) AS last120Dollars
-	 FROM (
-			SELECT 
-			store_id,
-			header.begin_date_time AS ticketTime,
-			header.transaction_net_amount AS ticketAmount
-			FROM pos_taco_transaction_header header 
-			WHERE $X{EQUAL, header.date, date}
-			AND $X{IN, header.store_id, storeIdsTb}
-			AND header.transaction_status = 'Finished' 
-		) ticketDetail
-		JOIN c_store_info info ON (info.store_id = ticketDetail.store_id)
-		GROUP BY info.store_id
-) storeTotals ON (storeTotals.store_id = cs.store_id)
-WHERE $X{IN, cs.store_id, storeIdsTb}
-GROUP BY storeNumber
-ORDER BY regionName, areaName, storeNumber]]>
+WHERE  $X{IN, header.store_id, storeIdsTb}
+GROUP BY ot.store_id]]>
 		</queryString>
 		<field name="areaName" class="java.lang.String"/>
 		<field name="regionName" class="java.lang.String"/>
 		<field name="storeNumber" class="java.lang.String"/>
-		<field name="openingTime" class="java.lang.String"/>
-		<field name="closingTime" class="java.lang.String"/>
-		<field name="lastSale" class="java.lang.String"/>
+		<field name="openingTime" class="java.sql.Time"/>
+		<field name="closingTime" class="java.sql.Time"/>
+		<field name="lastSale" class="java.sql.Time"/>
 		<field name="lostHours" class="java.lang.Integer"/>
 		<field name="last30Count" class="java.lang.Integer"/>
 		<field name="last60Count" class="java.lang.Integer"/>
-		<field name="last120Count" class="java.lang.Integer"/>
+		<field name="last120Count" class="java.sql.Time"/>
 		<field name="last30Dollars" class="java.math.BigDecimal"/>
 		<field name="last60Dollars" class="java.math.BigDecimal"/>
 		<field name="last120Dollars" class="java.math.BigDecimal"/>
@@ -177,10 +178,10 @@ ORDER BY regionName, areaName, storeNumber]]>
 			<variableExpression><![CDATA[$F{last120Dollars}]]></variableExpression>
 		</variable>
 		<group name="Group1">
-			<groupExpression><![CDATA[$F{regionName}]]></groupExpression>
+			<groupExpression><![CDATA[$F{areaName}]]></groupExpression>
 		</group>
 		<group name="Group2">
-			<groupExpression><![CDATA[$F{areaName}]]></groupExpression>
+			<groupExpression><![CDATA[$F{regionName}]]></groupExpression>
 		</group>
 	</subDataset>
 	<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
@@ -231,22 +232,8 @@ $P{startDateGetStart})]]></defaultValueExpression>
 (($P{WeekDatesTb} != null)? new java.lang.String(  "(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{WeekDatesTb} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{WeekDatesTb} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1))))") :
 $P{endDateGetStart})]]></defaultValueExpression>
 	</parameter>
-	<parameter name="dateGetStart" class="java.lang.String">
-		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{date}.getStart())]]></defaultValueExpression>
-	</parameter>
-	<parameter name="dayOfWeek" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT
-CASE DATE_FORMAT($P!{dateGetStart}, '%w')
-	WHEN 0 THEN 'sun'
-	WHEN 1 THEN 'mon'
-	WHEN 2 THEN 'tue'
-	WHEN 3 THEN 'wed'
-	WHEN 4 THEN 'thu'
-	WHEN 5 THEN 'fri'
-	WHEN 6 THEN 'sat'
-END
-AS weekDay,
+		<![CDATA[SELECT 
 startCal.date AS startDate,
 endCal.date AS endDate,
 startCal.period_number AS startPeriod,
@@ -269,9 +256,8 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 	<field name="startDayOfWeek" class="java.lang.Integer"/>
 	<field name="endDayOfWeek" class="java.lang.Integer"/>
 	<field name="brandLogo" class="java.io.InputStream"/>
-	<field name="dayOfWeek" class="java.lang.String"/>
 	<title>
-		<band height="181" splitType="Stretch">
+		<band height="190" splitType="Stretch">
 			<textField>
 				<reportElement x="0" y="56" width="1200" height="30" forecolor="#2E4454" uuid="0ff94c02-1fce-4147-a096-bcfeabfa0462"/>
 				<box leftPadding="4"/>
@@ -311,11 +297,11 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 				</reportElement>
 			</rectangle>
 			<image scaleImage="RealSize">
-				<reportElement x="0" y="0" width="1100" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
-				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "oneVIEWReportLogo.png"]]></imageExpression>
+				<reportElement x="0" y="0" width="1120" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWLogo" : "oneVIEW_ReportLogo.png"]]></imageExpression>
 			</image>
 			<image>
-				<reportElement x="1100" y="0" width="100" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
+				<reportElement x="1120" y="0" width="80" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
 				<imageExpression><![CDATA[$F{brandLogo}]]></imageExpression>
 			</image>
 		</band>
@@ -325,12 +311,12 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 			<componentElement>
 				<reportElement x="0" y="0" width="1200" height="140" uuid="08020a82-72cf-413c-b046-478d532ef743">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
-					<property name="com.jaspersoft.studio.table.style.table_header"/>
-					<property name="com.jaspersoft.studio.table.style.column_header"/>
-					<property name="com.jaspersoft.studio.table.style.detail"/>
+					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
 				</reportElement>
 				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
-					<datasetRun subDataset="ClosingSalesDataset" uuid="225b906d-9750-40bd-bdaa-d9b1f4c2be92">
+					<datasetRun subDataset="ClosingSalesDataset" uuid="9441dc37-ea0a-47af-b749-c2d1233655d5">
 						<datasetParameter name="LoggedInUsername">
 							<datasetParameterExpression><![CDATA[$P{LoggedInUsername}]]></datasetParameterExpression>
 						</datasetParameter>
@@ -340,32 +326,29 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 						<datasetParameter name="date">
 							<datasetParameterExpression><![CDATA[$P{date}.getStart()]]></datasetParameterExpression>
 						</datasetParameter>
-						<datasetParameter name="dayOfWeek">
-							<datasetParameterExpression><![CDATA[$F{dayOfWeek}]]></datasetParameterExpression>
-						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
 					<jr:columnGroup width="1200" uuid="1a0ada09-cca3-4846-92a2-326aae7fe7b2">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [11]"/>
 						<jr:groupHeader groupName="Group1">
-							<jr:cell height="20" rowSpan="1">
+							<jr:cell style="Table_CH" height="20" rowSpan="1">
 								<property name="com.jaspersoft.studio.unit.height" value="px"/>
 								<textField isBlankWhenNull="true">
 									<reportElement style="Group 1 Header" x="0" y="0" width="1200" height="20" uuid="1acdfd4e-e704-49dd-8eb0-f570ec602fdf"/>
 									<box leftPadding="4"/>
 									<textElement verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{regionName}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{areaName}]]></textFieldExpression>
 								</textField>
 							</jr:cell>
 						</jr:groupHeader>
 						<jr:groupHeader groupName="Group2">
-							<jr:cell height="20" rowSpan="1">
+							<jr:cell style="Table_CH" height="20" rowSpan="1">
 								<property name="com.jaspersoft.studio.unit.height" value="px"/>
 								<textField isBlankWhenNull="true">
 									<reportElement style="Group 2 Header" x="0" y="0" width="1200" height="20" uuid="db11a422-df38-4f26-b9e8-91ab2ae3fe53"/>
 									<box leftPadding="4"/>
 									<textElement verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{areaName}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{regionName}]]></textFieldExpression>
 								</textField>
 							</jr:cell>
 						</jr:groupHeader>
@@ -383,25 +366,25 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField isBlankWhenNull="true">
 										<reportElement style="Group 1 Footer" mode="Opaque" x="0" y="0" width="200" height="20" uuid="cfd31922-6aec-4e58-94f4-32e75b345956"/>
 										<box leftPadding="0" rightPadding="4"/>
 										<textElement textAlignment="Right" verticalAlignment="Middle"/>
-										<textFieldExpression><![CDATA[$F{regionName} + " " + "Totals"]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$F{areaName} + " " + "Totals"]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField isBlankWhenNull="true">
 										<reportElement style="Group 2 Footer" mode="Opaque" x="0" y="0" width="200" height="20" uuid="a233fa4e-33d5-4c93-b41c-3f65c1da2032"/>
 										<box leftPadding="0" rightPadding="4"/>
 										<textElement textAlignment="Right" verticalAlignment="Middle"/>
-										<textFieldExpression><![CDATA[$F{areaName} + " " + "Totals"]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$F{regionName} + " " + "Totals"]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -432,7 +415,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 							<jr:tableFooter height="20" rowSpan="1">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="bf9acab8-3537-4e35-b97b-d6e5b3388d95">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="bf9acab8-3537-4e35-b97b-d6e5b3388d95">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -444,16 +427,16 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="aba173a1-50f0-4380-97a9-47e33c500b32">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
@@ -462,7 +445,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<box>
 										<bottomPen lineWidth="0.0"/>
 									</box>
@@ -471,7 +454,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
@@ -503,7 +486,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
 							<jr:tableFooter height="20" rowSpan="1">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8019f72e-2219-4796-bc52-1afc434af6ba">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8019f72e-2219-4796-bc52-1afc434af6ba">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -515,16 +498,16 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="f2de7e4e-4c54-4ab4-9082-2a018deb8120">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
@@ -533,13 +516,13 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="6cfa8a0b-ec03-4193-a31f-04c8f7c0e917">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
@@ -571,7 +554,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
 							<jr:tableFooter height="20" rowSpan="1">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="92dafc56-0553-4e10-9c48-9108c25dd3f8">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="92dafc56-0553-4e10-9c48-9108c25dd3f8">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -583,16 +566,16 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="05f63a2a-d0c6-4d92-9bb5-b07e94a96c8f">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
@@ -601,13 +584,13 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="ab7613a7-f271-4e9a-b607-fcc51998502c">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
@@ -638,8 +621,8 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 						<jr:column width="100" uuid="d5b344ae-8a00-41ab-9bf3-0b5bcb62af57">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="6a21e0c2-bd44-4857-8b13-c03a699925c5">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="6a21e0c2-bd44-4857-8b13-c03a699925c5">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -652,37 +635,37 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
-										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="c80e55af-2cd5-4860-9c56-b0253b87abd4">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" style="lostHoursStyleArea" mode="Opaque" x="0" y="0" width="100" height="20" uuid="c80e55af-2cd5-4860-9c56-b0253b87abd4">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
-										</box>
-										<textElement textAlignment="Right" verticalAlignment="Middle">
-											<font size="12" isBold="true"/>
-										</textElement>
-										<textFieldExpression><![CDATA[$V{lostHours_regionGroup}]]></textFieldExpression>
-									</textField>
-								</jr:cell>
-							</jr:groupFooter>
-							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
-										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="1d83166b-490f-4e0c-b427-2ae4ec5c5bdb">
-											<property name="com.jaspersoft.studio.unit.height" value="px"/>
-										</reportElement>
-										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
 										<textFieldExpression><![CDATA[$V{lostHours_areaGroup}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" style="lostHoursStyleRegion" mode="Opaque" x="0" y="0" width="100" height="20" uuid="1d83166b-490f-4e0c-b427-2ae4ec5c5bdb">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{lostHours_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -709,8 +692,8 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 						<jr:column width="100" uuid="23be8d97-9ed8-49b5-a323-51b868f9ecc0">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8473597b-2a26-4bf1-a13a-9d614e6bbddf">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8473597b-2a26-4bf1-a13a-9d614e6bbddf">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -719,41 +702,41 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="12" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{last120Count_total}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{last30Count_total}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="a8c8b1ab-f8ab-4de6-8f2b-30e5819fe180">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last120Count_regionGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last30Count_areaGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="b6c13988-5284-4201-8038-4d11a528de86">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last120Count_areaGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last30Count_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -765,7 +748,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Left" verticalAlignment="Middle">
 										<font isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Last 120m"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Last 30m"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
@@ -773,15 +756,15 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="31f34235-0d1d-4a67-81af-ffd57c2f9654"/>
 									<box leftPadding="0" rightPadding="4"/>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{last120Count}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{last30Count}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
 						<jr:column width="100" uuid="0c5380fb-bcf6-4915-a411-8d5bb89b5dce">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="5f364792-6fc1-40d5-b185-c15f45795b7a">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="5f364792-6fc1-40d5-b185-c15f45795b7a">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -794,37 +777,37 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="ed44a8a9-5e41-4b68-ac48-ed8036cf2d04">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
-										</box>
-										<textElement textAlignment="Right" verticalAlignment="Middle">
-											<font size="12" isBold="true"/>
-										</textElement>
-										<textFieldExpression><![CDATA[$V{last60Count_regionGroup}]]></textFieldExpression>
-									</textField>
-								</jr:cell>
-							</jr:groupFooter>
-							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
-										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="942eba45-9aeb-47dd-8264-74bbcd5648d8">
-											<property name="com.jaspersoft.studio.unit.height" value="px"/>
-										</reportElement>
-										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
 										<textFieldExpression><![CDATA[$V{last60Count_areaGroup}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="942eba45-9aeb-47dd-8264-74bbcd5648d8">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last60Count_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -851,8 +834,8 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 						<jr:column width="100" uuid="7235c248-6a3a-484f-b468-d77e10c5a051">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="07338fb5-7bed-4f34-bbb4-a562206fab53">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="07338fb5-7bed-4f34-bbb4-a562206fab53">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -861,43 +844,43 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="12" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{last30Count_total}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{last120Count_total}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<property name="com.jaspersoft.studio.unit.height" value="px"/>
-									<textField pattern="#,##0" isBlankWhenNull="true">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="3c4f8d32-2220-4d6d-b003-3db1da7839ce">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last30Count_regionGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last120Count_areaGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
 									<property name="com.jaspersoft.studio.unit.height" value="px"/>
-									<textField pattern="#,##0" isBlankWhenNull="true">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="e4a220da-d462-4d3f-956f-969a00ea131f">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last30Count_areaGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last120Count_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -909,7 +892,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Left" verticalAlignment="Middle">
 										<font isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Last 30m"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Last 120m"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
@@ -917,15 +900,15 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="d276cb46-eda9-439a-a9b1-8c45c7eed652"/>
 									<box leftPadding="0" rightPadding="4"/>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{last30Count}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{last120Count}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
 						<jr:column width="100" uuid="5f7b5e9f-4813-444c-9867-01e85635866d">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="65f2760e-65eb-45ed-9311-b9b1e7e835e3">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="65f2760e-65eb-45ed-9311-b9b1e7e835e3">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -934,43 +917,43 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="12" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{last120Dollars_total}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{last30Dollars_total}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1">
 									<property name="com.jaspersoft.studio.unit.height" value="px"/>
 								</jr:cell>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="9070d1a7-8f81-47d3-8faf-ffa19871d590">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last120Dollars_regionGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last30Dollars_areaGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="1e2986a7-3f0e-4b23-97e5-5dbc87f5c09b">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last120Dollars_areaGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last30Dollars_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -982,7 +965,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Left" verticalAlignment="Middle">
 										<font isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Last 120 \$"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Last 30 /$"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
@@ -990,15 +973,15 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="3e04230b-0d8b-44a7-bcec-58569ccffd86"/>
 									<box leftPadding="0" rightPadding="4"/>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{last120Dollars}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{last30Dollars}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
 						<jr:column width="100" uuid="146fe86f-dcb0-4dc7-9041-4802d2ccb540">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="661f68f1-3db2-47cc-a6a6-cc8dfd3b8f26">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="661f68f1-3db2-47cc-a6a6-cc8dfd3b8f26">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -1011,37 +994,37 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="802a8023-24ef-4d3a-a209-cdb7a91ef679">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
-										</box>
-										<textElement textAlignment="Right" verticalAlignment="Middle">
-											<font size="12" isBold="true"/>
-										</textElement>
-										<textFieldExpression><![CDATA[$V{last60Dollars_regionGroup}]]></textFieldExpression>
-									</textField>
-								</jr:cell>
-							</jr:groupFooter>
-							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
-										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="f88e1f6f-24ab-4c6a-bbf5-fe50df7f6ca4">
-											<property name="com.jaspersoft.studio.unit.height" value="px"/>
-										</reportElement>
-										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
 										<textFieldExpression><![CDATA[$V{last60Dollars_areaGroup}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:groupFooter groupName="Group2">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="f88e1f6f-24ab-4c6a-bbf5-fe50df7f6ca4">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last60Dollars_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -1053,7 +1036,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Left" verticalAlignment="Middle">
 										<font isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Last 60 \$"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Last 60 /$"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
@@ -1068,8 +1051,8 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 						<jr:column width="100" uuid="cf64c7f4-133f-41bc-93dd-763feff83b1f">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
 							<jr:tableFooter height="20" rowSpan="1">
-								<textField pattern="#,##0" isBlankWhenNull="true">
-									<reportElement key="" style="Table Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="4362b6e2-6288-46d3-8f4a-0e2940a64db8">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="4362b6e2-6288-46d3-8f4a-0e2940a64db8">
 										<property name="com.jaspersoft.studio.unit.height" value="px"/>
 									</reportElement>
 									<box rightPadding="4">
@@ -1078,41 +1061,41 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="12" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{last30Dollars_total}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{last120Dollars_total}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupHeader groupName="Group1">
-								<jr:cell height="0" rowSpan="1"/>
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
 							</jr:groupHeader>
 							<jr:groupFooter groupName="Group1">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 1 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="ce4fb87e-1389-4b72-8ce2-02f0230c2bb2">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last30Dollars_regionGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last120Dollars_areaGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:groupFooter groupName="Group2">
-								<jr:cell height="20" rowSpan="1">
-									<textField pattern="#,##0" isBlankWhenNull="true">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
 										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="cd497fc5-0d6b-4594-b182-fd8265497da0">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">
-											<topPen lineWidth="0.0" lineStyle="Solid"/>
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="12" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{last30Dollars_areaGroup}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{last120Dollars_regionGroup}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -1124,7 +1107,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<textElement textAlignment="Left" verticalAlignment="Middle">
 										<font isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Last 30 \$"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Last 120 /$"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
@@ -1132,7 +1115,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 									<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8eab960b-f2e4-4713-a16b-e8724c339173"/>
 									<box leftPadding="0" rightPadding="4"/>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{last30Dollars}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{last120Dollars}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
@@ -1156,21 +1139,21 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 				</reportElement>
 			</rectangle>
 			<textField>
-				<reportElement x="0" y="15" width="1200" height="20" uuid="67c90d52-6f75-4eb0-9297-0ac95c2c7260">
+				<reportElement style="Page Footer" x="0" y="15" width="1200" height="20" uuid="e98d250e-262d-45f0-a3d3-747277b0e914">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA["Report By: " + $P{LoggedInUserFullName} ?: "Unknown"]]></textFieldExpression>
 			</textField>
 			<textField pattern="MMMMM dd yyyy hh:mma" isBlankWhenNull="true">
-				<reportElement x="0" y="35" width="1200" height="20" uuid="c8c127d9-def6-4610-8bab-d0c571f5b707"/>
+				<reportElement style="Page Footer" x="0" y="35" width="1200" height="20" uuid="f6e4629e-f87e-4694-b3ba-9c97aa17d4e8"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="SansSerif" size="10" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="0" y="55" width="1" height="20" uuid="8d92282c-bd3f-4653-82bb-da82accb106e">
+				<reportElement style="Page Footer" mode="Transparent" x="0" y="55" width="50" height="20" uuid="90ede4cf-8b0f-4d80-97dd-1a0380495ddc">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -1179,7 +1162,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report" isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="50" y="55" width="1150" height="20" uuid="c7a35ed2-c597-441d-9af9-f2eb6e1fc9b4">
+				<reportElement style="Page Footer" mode="Transparent" x="50" y="55" width="1150" height="20" uuid="514a0634-62f9-4962-9df8-39c3881518d3">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle">

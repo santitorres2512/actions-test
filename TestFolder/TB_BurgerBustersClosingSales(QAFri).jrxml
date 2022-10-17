@@ -35,9 +35,27 @@
 		</parameter>
 		<parameter name="date" class="java.util.Date"/>
 		<parameter name="dayOfWeek" class="java.lang.String"/>
-		<parameter name="weekDay" class="java.lang.String"/>
 		<queryString>
 			<![CDATA[SELECT 
+CASE DATE_FORMAT($P!{dateGetStart}, '%w')
+	WHEN 0 THEN 'sun'
+	WHEN 1 THEN 'mon'
+	WHEN 2 THEN 'tue'
+	WHEN 3 THEN 'wed'
+	WHEN 4 THEN 'thu'
+	WHEN 5 THEN 'fri'
+	WHEN 6 THEN 'sat'
+END
+AS weekDay,
+startCal.date AS startDate,
+endCal.date AS endDate,
+startCal.period_number AS startPeriod,
+endCal.period_number AS endPeriod,
+startCal.week_of_period AS startWeek,
+endCal.week_of_period AS endWeek,
+startCal.day_of_week AS startDayOfWeek,
+endCal.day_of_week AS endDayOfWeek,
+org_brand.small_logo AS brandLogo,
 org_area.name AS areaName, 
 org_region.name AS regionName, 
 cs.store_number AS storeNumber, 
@@ -54,6 +72,8 @@ storeTotals.last60Dollars,
 storeTotals.last120Dollars
 FROM c_store cs 
 JOIN org_brand ON (org_brand.brand_id = cs.brand_id AND org_brand.code = 'tb')
+JOIN c_calendar startCal ON (startCal.calendar_id = org_brand.calendar_id AND startCal.date = DATE($P!{startDateFilter}) AND org_brand.code = "tb")
+JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCal.date = DATE($P!{endDateFilter}) AND org_brand.code = "tb")
 JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
 JOIN org_area ON (org_area.area_id = cs.area_id)
 JOIN org_region ON (org_region.region_id = cs.region_id)
@@ -113,6 +133,14 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<field name="last60Dollars" class="java.math.BigDecimal"/>
 		<field name="last120Dollars" class="java.math.BigDecimal"/>
 		<field name="storeName" class="java.lang.String"/>
+		<field name="weekDay" class="java.lang.String"/>
+		<field name="startDate" class="java.sql.Date"/>
+		<field name="endDate" class="java.sql.Date"/>
+		<field name="startPeriod" class="java.sql.Date"/>
+		<field name="endPeriod" class="java.sql.Date"/>
+		<field name="startDayOfWeek" class="java.sql.Date"/>
+		<field name="endDayOfWeek" class="java.lang.String"/>
+		<field name="brandLogo" class="java.lang.String"/>
 		<variable name="lostHours_total" class="java.math.BigDecimal" calculation="Sum">
 			<variableExpression><![CDATA[$F{lostHours}]]></variableExpression>
 		</variable>
@@ -236,17 +264,8 @@ $P{endDateGetStart})]]></defaultValueExpression>
 	</parameter>
 	<parameter name="dayOfWeek" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT
-CASE DATE_FORMAT($P!{dateGetStart}, '%w')
-	WHEN 0 THEN 'sun'
-	WHEN 1 THEN 'mon'
-	WHEN 2 THEN 'tue'
-	WHEN 3 THEN 'wed'
-	WHEN 4 THEN 'thu'
-	WHEN 5 THEN 'fri'
-	WHEN 6 THEN 'sat'
-END
-AS weekDay,
+		<![CDATA[SELECT 
+DATE_FORMAT($P!{dateGetStart}, '%w') AS dayOfWeek,
 startCal.date AS startDate,
 endCal.date AS endDate,
 startCal.period_number AS startPeriod,

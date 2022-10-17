@@ -35,15 +35,14 @@
 		</parameter>
 		<parameter name="date" class="java.util.Date"/>
 		<parameter name="dayOfWeek" class="java.lang.String"/>
-		<parameter name="weekDay" class="java.lang.String"/>
 		<queryString>
 			<![CDATA[SELECT 
 org_area.name AS areaName, 
 org_region.name AS regionName, 
 cs.store_number AS storeNumber, 
 cs.store_name AS storeName,
-info.store_open_$P!{weekDay} AS openingTime, 
-info.store_close_$P!{weekDay} AS closingTime, 
+IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_open_mon,info.store_open_sat) AS openingTime, 
+IF($P!{dayOfWeek} IN (0,1,2,3,4), info.store_close_mon, info.store_close_sat) AS closingTime, 
 storeTotals.lastSale,
 storeTotals.lostHours,
 storeTotals.last30Count,
@@ -63,24 +62,24 @@ LEFT JOIN (
 	SELECT
 	ticketDetail.store_id,
 	MAX(TIME(ticketDetail.ticketTime)) AS lastSale,
-	ROUND(TIME_TO_SEC(TIMEDIFF(MAX(TIME(ticketDetail.ticketTime)),info.store_close_$P!{weekDay}))/60) AS lostHours,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, 1, 0)
+	ROUND(TIME_TO_SEC(TIMEDIFF(MAX(TIME(ticketDetail.ticketTime)), IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_close_mon,info.store_close_sat)))/60) AS lostHours,
+	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, 1, 
+		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, 1, 0)
 	 )) AS last30Count,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, 1, 0)
+	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, 1, 
+		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, 1, 0)
 	 )) AS last60Count,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, 1, 0)
+	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, 1, 
+		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, 1, 0)
 	 )) AS last120Count,
-	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 30 minute)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 0)
+	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, ticketDetail.ticketAmount, 
+		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, ticketDetail.ticketAmount, 0)
 	 )) AS last30Dollars,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 1 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 0)
+	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, ticketDetail.ticketAmount, 
+		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, ticketDetail.ticketAmount, 0)
 	 )) AS last60Dollars,
-	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_$P!{weekDay}, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_$P!{weekDay}, INTERVAL 2 hour)) AND info.store_close_$P!{weekDay}, ticketDetail.ticketAmount, 0)
+	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, ticketDetail.ticketAmount, 
+		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, ticketDetail.ticketAmount, 0)
 	 )) AS last120Dollars
 	 FROM (
 			SELECT 
@@ -236,17 +235,8 @@ $P{endDateGetStart})]]></defaultValueExpression>
 	</parameter>
 	<parameter name="dayOfWeek" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT
-CASE DATE_FORMAT($P!{dateGetStart}, '%w')
-	WHEN 0 THEN 'sun'
-	WHEN 1 THEN 'mon'
-	WHEN 2 THEN 'tue'
-	WHEN 3 THEN 'wed'
-	WHEN 4 THEN 'thu'
-	WHEN 5 THEN 'fri'
-	WHEN 6 THEN 'sat'
-END
-AS weekDay,
+		<![CDATA[SELECT 
+DATE_FORMAT($P!{dateGetStart}, '%w') AS dayOfWeek,
 startCal.date AS startDate,
 endCal.date AS endDate,
 startCal.period_number AS startPeriod,
