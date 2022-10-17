@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="JobRecurrenceReport" language="groovy" pageWidth="1140" pageHeight="900" orientation="Landscape" columnWidth="1100" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="5ec9ab47-55a9-4a7f-9f5d-3dfed18b40dd">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="com.monolithss.oneview.jr.Config"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/jrtx/MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table 1_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Zebra" mode="Transparent">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{PAGE_COUNT}.intValue() % 2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#D4D4D4"/>
+		</conditionalStyle>
+	</style>
+	<subDataset name="Dataset1" uuid="157178a1-da43-4317-b545-21ee3d068756">
+		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="OneView_CID2"/>
+		<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="377"/>
+		<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="618"/>
+		<parameter name="LoggedInUsername" class="java.lang.String"/>
+		<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+		<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false"/>
+		<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+			<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+		</parameter>
+		<queryString language="SQL">
+			<![CDATA[SELECT 
+job.label AS report_name,
+u.fullname AS report_owner_name,
+d.email_destination,
+CASE cal.days_type
+	WHEN 1 THEN DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY)
+	WHEN 2 THEN 
+		CASE cal.week_days
+			WHEN 1 THEN DATE(CURRENT_DATE() + INTERVAL 6 - WEEKDAY(CURRENT_DATE()) DAY)
+			WHEN 2 THEN DATE(CURRENT_DATE() + INTERVAL 7 - WEEKDAY(CURRENT_DATE()) DAY)
+			WHEN 3 THEN DATE(CURRENT_DATE() + INTERVAL 8 - WEEKDAY(CURRENT_DATE()) DAY)
+			WHEN 4 THEN DATE(CURRENT_DATE() + INTERVAL 9 - WEEKDAY(CURRENT_DATE()) DAY)
+			WHEN 5 THEN DATE(CURRENT_DATE() + INTERVAL 10 - WEEKDAY(CURRENT_DATE()) DAY)
+			WHEN 6 THEN DATE(CURRENT_DATE() + INTERVAL 11 - WEEKDAY(CURRENT_DATE()) DAY)
+			WHEN 7 THEN DATE(CURRENT_DATE() + INTERVAL 12 - WEEKDAY(CURRENT_DATE()) DAY)
+		END
+END AS next_run_time,
+job.creation_date AS report_creation_date,
+CASE 
+	WHEN t.recurrence_interval = 1 THEN '(Simple) Daily '
+	WHEN t.recurrence_interval > 1 THEN CONCAT('(Simple) Every ',t.recurrence_interval,' days')
+	WHEN cal.days_type = 1 THEN '(Calendar) Daily'
+	WHEN cal.days_type = 2 THEN 
+		CASE cal.week_days
+		WHEN 1 THEN '(Calendar) Days of week: Sunday' 
+		WHEN 2 THEN '(Calendar) Days of week: Monday' 
+		WHEN 3 THEN '(Calendar) Days of week: Tuesday'  
+		WHEN 4 THEN '(Calendar) Days of week: Wednesday' 
+		WHEN 5 THEN '(Calendar) Days of week: Thursday' 
+		WHEN 6 THEN '(Calendar) Days of week: Friday' 
+		WHEN 7 THEN '(Calendar) Days of week: Sunday'
+		END
+	WHEN cal.days_type = 3 THEN CONCAT('(Calendar) Days triggered in month: ',cal.month_days) 
+END
+AS recurrence,
+
+COALESCE(cal.hours, 0) AS hours,
+COALESCE(cal.minutes, 0) AS minutes
+FROM JIReportJob job
+JOIN JIUser u ON job.owner = u.id
+JOIN JITenant tenant ON (tenant.id = u.tenantId AND tenant.tenantId = $P{LoggedInUserTenantId})
+JOIN (	
+	SELECT
+	destination_id,
+	GROUP_CONCAT(address) AS email_destination 
+	FROM JIReportJobMailRecipient
+	GROUP BY destination_id
+) AS d ON job.mail_notification = d.destination_id
+LEFT JOIN JIReportJobSimpleTrigger t ON job.job_trigger = t.id
+LEFT JOIN JIReportJobTrigger jt ON job.job_trigger = jt.id
+LEFT JOIN JIReportJobCalendarTrigger cal ON cal.id = job.job_trigger
+WHERE job.report_unit_uri NOT LIKE '%/onepay/%']]>
+		</queryString>
+		<field name="report_name" class="java.lang.String">
+			<property name="com.jaspersoft.studio.field.name" value="base_output_name"/>
+			<property name="com.jaspersoft.studio.field.label" value="report_name"/>
+			<property name="com.jaspersoft.studio.field.tree.path" value="JIReportJob"/>
+		</field>
+		<field name="report_owner_name" class="java.lang.String">
+			<property name="com.jaspersoft.studio.field.name" value="fullname"/>
+			<property name="com.jaspersoft.studio.field.label" value="report_owner_name"/>
+			<property name="com.jaspersoft.studio.field.tree.path" value="JIUser"/>
+		</field>
+		<field name="email_destination" class="java.lang.String">
+			<property name="com.jaspersoft.studio.field.name" value="email_destination"/>
+			<property name="com.jaspersoft.studio.field.label" value="email_destination"/>
+		</field>
+		<field name="next_run_time" class="java.util.Date">
+			<property name="com.jaspersoft.studio.field.name" value="start_date"/>
+			<property name="com.jaspersoft.studio.field.label" value="next_run_time"/>
+			<property name="com.jaspersoft.studio.field.tree.path" value="JIReportJobTrigger"/>
+		</field>
+		<field name="report_creation_date" class="java.util.Date">
+			<property name="com.jaspersoft.studio.field.name" value="creation_date"/>
+			<property name="com.jaspersoft.studio.field.label" value="report_creation_date"/>
+			<property name="com.jaspersoft.studio.field.tree.path" value="JIReportJob"/>
+		</field>
+		<field name="recurrence" class="java.lang.String"/>
+		<field name="hours" class="java.lang.Integer"/>
+		<field name="minutes" class="java.lang.Integer"/>
+		<variable name="trigger_recurrence" class="java.lang.String">
+			<variableExpression><![CDATA[$F{recurrence} != null && $F{recurrence}.equals("1") ? "Every Day" : "Every " + $F{recurrence}+ " Days"]]></variableExpression>
+		</variable>
+		<variable name="runTime" class="java.lang.String">
+			<variableExpression><![CDATA[$F{next_run_time}]]></variableExpression>
+		</variable>
+	</subDataset>
+	<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+	<parameter name="LoggedInUsername" class="java.lang.String"/>
+	<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[SELECT 1 FROM DUAL]]>
+	</queryString>
+	<title>
+		<band height="69">
+			<image scaleImage="Clip" hAlign="Left" onErrorType="Blank">
+				<reportElement key="image-1" mode="Transparent" x="0" y="0" width="200" height="36" uuid="3fcd4800-afe6-41f6-897c-878d57de4d20">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<graphicElement>
+					<pen lineWidth="0.0" lineStyle="Solid"/>
+				</graphicElement>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/images/logo.png" : "OdsLogo137x37.jpg"]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement x="0" y="36" width="1100" height="33" uuid="df61b4ed-46f3-4685-a57c-f0e7d473c60c"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="15" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Scheduled Subscriptions
+]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="50">
+			<componentElement>
+				<reportElement x="0" y="0" width="1100" height="50" uuid="f33f1045-dc2e-43d2-a31b-0fdccad578de">
+					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					<property name="com.jaspersoft.studio.table.style.table_header" value="Table 1_TH"/>
+					<property name="com.jaspersoft.studio.table.style.column_header" value="Table 1_CH"/>
+					<property name="com.jaspersoft.studio.table.style.detail" value="Table 1_TD"/>
+				</reportElement>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="Dataset1" uuid="4dcc8cfa-61c4-4151-b1ae-87bb262581d2">
+						<datasetParameter name="LoggedInUsername">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUsername}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="LoggedInUserTenantId">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUserTenantId}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="LoggedInUser">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUser}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="LoggedInUserFullName">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUserFullName}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="200" uuid="f6c54597-f0a7-495e-a319-acb445442579">
+						<jr:columnHeader height="30">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<staticText>
+								<reportElement style="Column" x="0" y="0" width="200" height="30" uuid="4daa1e85-96a7-4830-959f-2024a37b4e11"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Report Name]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table 1_TD" height="20">
+							<property name="com.jaspersoft.studio.unit.height" value="px"/>
+							<box>
+								<pen lineWidth="0.0"/>
+								<bottomPen lineWidth="0.25"/>
+							</box>
+							<textField isBlankWhenNull="true">
+								<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="200" height="20" uuid="ff9f830e-aa6a-4205-9169-0dfcd01441d1"/>
+								<box leftPadding="4">
+									<pen lineWidth="0.0"/>
+								</box>
+								<textElement verticalAlignment="Middle"/>
+								<textFieldExpression><![CDATA[$F{report_name}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="140" uuid="568afa7d-8abc-4fb6-a20f-67c89fd62221">
+						<jr:columnHeader height="30">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<staticText>
+								<reportElement style="Column" x="0" y="0" width="140" height="30" uuid="934231ab-df86-4d86-b859-9cd42ebdafbf"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Report Owner]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table 1_TD" height="20">
+							<box>
+								<pen lineWidth="0.0"/>
+								<bottomPen lineWidth="0.25"/>
+							</box>
+							<textField isBlankWhenNull="true">
+								<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="140" height="20" uuid="c29e6a0d-20e6-492d-9c31-ea4612cd7ba4"/>
+								<box leftPadding="4">
+									<pen lineWidth="0.0"/>
+								</box>
+								<textElement verticalAlignment="Middle"/>
+								<textFieldExpression><![CDATA[$F{report_owner_name}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="200" uuid="5714351a-5783-45c2-9baf-fabf0c5a242d">
+						<jr:columnHeader height="30">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<staticText>
+								<reportElement style="Column" x="0" y="0" width="200" height="30" uuid="07eeb369-71cc-4fc1-9243-1bf9d261cab5"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Email Distribution(s)]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table 1_TD" height="20">
+							<box>
+								<pen lineWidth="0.0"/>
+								<bottomPen lineWidth="0.25"/>
+							</box>
+							<textField isBlankWhenNull="true">
+								<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="200" height="20" isPrintWhenDetailOverflows="true" uuid="3ae9a35f-557a-4f60-a93c-d7873b9c9fc9"/>
+								<box leftPadding="4">
+									<pen lineWidth="0.0"/>
+								</box>
+								<textElement verticalAlignment="Middle"/>
+								<textFieldExpression><![CDATA[$F{email_destination}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="300" uuid="a820b588-929c-420b-971d-f5601bff6ab1">
+						<jr:columnHeader height="30">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<staticText>
+								<reportElement style="Column" x="0" y="0" width="300" height="30" uuid="c5d03cb3-e797-4cb5-9d50-18324ebb9a2d"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Recurrence]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table 1_TD" height="20">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<box>
+								<pen lineWidth="0.0"/>
+								<bottomPen lineWidth="0.25"/>
+							</box>
+							<textField isBlankWhenNull="true">
+								<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="300" height="20" isPrintWhenDetailOverflows="true" uuid="e8e6010a-0852-4778-85f3-123d008aa8c2"/>
+								<box leftPadding="4">
+									<pen lineWidth="0.0"/>
+								</box>
+								<textElement verticalAlignment="Middle"/>
+								<textFieldExpression><![CDATA[$F{recurrence}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="130" uuid="6c4ec3b9-7334-45fe-b15a-6e88d61eb34e">
+						<jr:columnHeader height="30">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<staticText>
+								<reportElement style="Column" x="0" y="0" width="130" height="30" uuid="d4ae3aa4-a9a4-4164-bc03-13fdb8928f94"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Next Run Time]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table 1_TD" height="20">
+							<box>
+								<pen lineWidth="0.0"/>
+								<bottomPen lineWidth="0.25"/>
+							</box>
+							<textField isBlankWhenNull="true">
+								<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="130" height="20" uuid="4efe8d6d-93e6-414a-8d8c-ca23eb45fe0c"/>
+								<box leftPadding="0" rightPadding="4">
+									<pen lineWidth="0.0"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle"/>
+								<textFieldExpression><![CDATA[DATEFORMAT($F{next_run_time},"MM/dd/yyyy HH:mm")]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="130" uuid="89dc079e-fa5c-4380-bd01-48230e950305">
+						<jr:columnHeader height="30">
+							<property name="com.jaspersoft.studio.unit.width" value="px"/>
+							<staticText>
+								<reportElement style="Column" x="0" y="0" width="130" height="30" uuid="2eb7101e-b6ef-4fb9-a502-568f4a392fb7"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10" isBold="true"/>
+								</textElement>
+								<text><![CDATA[Report Creation Date]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table 1_TD" height="20">
+							<box>
+								<pen lineWidth="0.0"/>
+								<bottomPen lineWidth="0.25"/>
+							</box>
+							<textField isBlankWhenNull="true">
+								<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="130" height="20" uuid="0235da5d-e12c-4563-84cc-cef74ff0ba4c"/>
+								<box leftPadding="0" rightPadding="4">
+									<pen lineWidth="0.0"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle" markup="html"/>
+								<textFieldExpression><![CDATA[DATEFORMAT($F{report_creation_date},"MM/dd/yyyy")]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="33">
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-12" x="0" y="0" width="26" height="20" uuid="3170bb88-6b8b-46e4-8882-5b61ac64036e">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["By:"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="false">
+				<reportElement key="textField-13" x="26" y="0" width="174" height="20" uuid="e46ecba1-d88b-4dd3-8356-f7d0aecdd2c3">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{LoggedInUserFullName} == null ? "Unknown" : $P{LoggedInUserFullName}]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd yyyy hh:mma">
+				<reportElement x="0" y="20" width="200" height="13" uuid="55bd42dc-d9b3-4618-b22a-0a5b7a3a2d6a"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement key="" x="980" y="19" width="80" height="14" uuid="4376ab0b-f6f6-435c-bb39-a233617771a4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement key="" x="1060" y="19" width="40" height="14" uuid="905c5775-34c7-4bf5-bf7d-6dcae1c7af1f"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="30">
+			<staticText>
+				<reportElement x="0" y="0" width="1100" height="30" uuid="750e3077-2da7-4b18-9049-b2dbaf2573dc"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[No data for current selections]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>
