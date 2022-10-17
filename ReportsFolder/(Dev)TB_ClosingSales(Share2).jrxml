@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_ClosingSales" language="groovy" pageWidth="1240" pageHeight="500" whenNoDataType="AllSectionsNoDetail" columnWidth="1200" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isFloatColumnFooter="true" uuid="0817241c-9d6f-450b-a651-51a83721769f">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWStyle" : "oneVIEWStyle.jrtx"]]></template>
+	<style name="zebra">
+		<box rightPadding="0"/>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{PAGE_COUNT}.intValue() % 2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#D4D4D4">
+				<box leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+			</style>
+		</conditionalStyle>
+	</style>
+	<subDataset name="ClosingSalesDataset" uuid="4750145e-5a3a-44d6-8e06-25e6bd60f058">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NO_DATA_ADAPTER"/>
+		<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false"/>
+		<parameter name="storeIdsTb" class="java.util.List" nestedType="java.lang.Integer">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
+		</parameter>
+		<parameter name="date" class="java.util.Date"/>
+		<queryString>
+			<![CDATA[SELECT 
+ot.area AS areaName, 
+ot.region AS regionName, 
+ot.store_number AS storeNumber, 
+ot.store_name AS storeName,
+IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_open_mon,info.store_open_sat) AS openingTime, 
+IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_close_mon,info.store_close_sat) AS closingTime, 
+MAX(TIME(header.begin_date_time)) AS lastSale,
+CONCAT('',TIMEDIFF(MAX(TIME(header.begin_date_time)), IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_close_mon,TIME(info.store_close_sat)))) AS lostHours,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, 1, 0)
+ )) AS last30Count,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, 1, 0)
+ )) AS last60Count,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, 1, 0)
+ )) AS last120Count,
+ SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last30Dollars,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last60Dollars,
+ SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last120Dollars
+FROM org_tree ot 
+JOIN org_brand ON (org_brand.brand_id = ot.brand_id AND org_brand.code = 'tb')
+JOIN c_store_info info ON (info.store_id = ot.store_id AND info.in_reports = 1)
+JOIN c_date ON $X{EQUAL, c_date.mysql_date, date} 
+JOIN pos_taco_transaction_header header ON (header.store_id = ot.store_id AND header.date = c_date.mysql_date)
+JOIN c_store_access ON (c_store_access.store_id = ot.store_id) 
+JOIN c_user ON (c_user.user_id = c_store_access.user_id AND c_user.username = $P{LoggedInUsername})
+WHERE  $X{IN, header.store_id, storeIdsTb}
+GROUP BY ot.store_id]]>
+		</queryString>
+		<field name="areaName" class="java.lang.String"/>
+		<field name="regionName" class="java.lang.String"/>
+		<field name="storeNumber" class="java.lang.String"/>
+		<field name="openingTime" class="java.sql.Time"/>
+		<field name="closingTime" class="java.sql.Time"/>
+		<field name="lastSale" class="java.sql.Time"/>
+		<field name="lostHours" class="java.lang.Integer"/>
+		<field name="last30Count" class="java.lang.Integer"/>
+		<field name="last60Count" class="java.lang.Integer"/>
+		<field name="last120Count" class="java.sql.Time"/>
+		<field name="last30Dollars" class="java.math.BigDecimal"/>
+		<field name="last60Dollars" class="java.math.BigDecimal"/>
+		<field name="last120Dollars" class="java.math.BigDecimal"/>
+		<field name="storeName" class="java.lang.String"/>
+		<variable name="lostHours_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{lostHours}]]></variableExpression>
+		</variable>
+		<variable name="last30Count_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last30Count}]]></variableExpression>
+		</variable>
+		<variable name="last60Count_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last60Count}]]></variableExpression>
+		</variable>
+		<variable name="last120Count_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last120Count}]]></variableExpression>
+		</variable>
+		<variable name="last30Dollars_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last30Dollars}]]></variableExpression>
+		</variable>
+		<variable name="last60Dollars_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last60Dollars}]]></variableExpression>
+		</variable>
+		<variable name="last120Dollars_total" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last120Dollars}]]></variableExpression>
+		</variable>
+		<variable name="lostHours_areaGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{lostHours}]]></variableExpression>
+		</variable>
+		<variable name="last30Count_areaGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last30Count}]]></variableExpression>
+		</variable>
+		<variable name="last60Count_areaGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last60Count}]]></variableExpression>
+		</variable>
+		<variable name="last120Count_areaGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last120Count}]]></variableExpression>
+		</variable>
+		<variable name="last30Dollars_areaGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last30Dollars}]]></variableExpression>
+		</variable>
+		<variable name="last60Dollars_areaGroup" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last60Dollars}]]></variableExpression>
+		</variable>
+		<variable name="last120Dollars_areaGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last120Dollars}]]></variableExpression>
+		</variable>
+		<variable name="lostHours_regionGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{lostHours}]]></variableExpression>
+		</variable>
+		<variable name="last30Count_regionGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last30Count}]]></variableExpression>
+		</variable>
+		<variable name="last60Count_regionGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last60Count}]]></variableExpression>
+		</variable>
+		<variable name="last120Count_regionGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last120Count}]]></variableExpression>
+		</variable>
+		<variable name="last30Dollars_regionGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last30Dollars}]]></variableExpression>
+		</variable>
+		<variable name="last60Dollars_regionGroup" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{last60Dollars}]]></variableExpression>
+		</variable>
+		<variable name="last120Dollars_regionGroup" class="java.math.BigDecimal" resetType="Group" calculation="Sum">
+			<variableExpression><![CDATA[$F{last120Dollars}]]></variableExpression>
+		</variable>
+		<group name="areaGroup">
+			<groupExpression><![CDATA[$F{areaName}]]></groupExpression>
+		</group>
+		<group name="regionGroup">
+			<groupExpression><![CDATA[$F{regionName}]]></groupExpression>
+		</group>
+	</subDataset>
+	<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+	<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getUsername()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="storeIdsTb" class="java.util.List" nestedType="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="date" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateGetStart" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{startDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateGetStart" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{endDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="WeekDatesTb" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PeriodDatesTb" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateFilter" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[($P{PeriodDatesTb} != null)? $P{PeriodDatesTb} :
+(($P{WeekDatesTb} != null)? $P{WeekDatesTb} :
+$P{startDateGetStart})]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[($P{PeriodDatesTb} != null)? new java.lang.String("(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1))))") :
+(($P{WeekDatesTb} != null)? new java.lang.String(  "(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{WeekDatesTb} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{WeekDatesTb} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1))))") :
+$P{endDateGetStart})]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT 
+startCal.date AS startDate,
+endCal.date AS endDate,
+startCal.period_number AS startPeriod,
+endCal.period_number AS endPeriod,
+startCal.week_of_period AS startWeek,
+endCal.week_of_period AS endWeek,
+startCal.day_of_week AS startDayOfWeek,
+endCal.day_of_week AS endDayOfWeek,
+org_brand.small_logo AS brandLogo
+FROM org_brand
+JOIN c_calendar startCal ON (startCal.calendar_id = org_brand.calendar_id AND startCal.date = DATE($P!{startDateFilter}) AND org_brand.code = "tb")
+JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCal.date = DATE($P!{endDateFilter}) AND org_brand.code = "tb")]]>
+	</queryString>
+	<field name="startDate" class="java.util.Date"/>
+	<field name="endDate" class="java.util.Date"/>
+	<field name="startPeriod" class="java.lang.Integer"/>
+	<field name="endPeriod" class="java.lang.Integer"/>
+	<field name="startWeek" class="java.lang.Integer"/>
+	<field name="endWeek" class="java.lang.Integer"/>
+	<field name="startDayOfWeek" class="java.lang.Integer"/>
+	<field name="endDayOfWeek" class="java.lang.Integer"/>
+	<field name="brandLogo" class="java.io.InputStream"/>
+	<title>
+		<band height="190" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="56" width="1200" height="30" forecolor="#2E4454" uuid="0ff94c02-1fce-4147-a096-bcfeabfa0462"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["TB Closing Sales"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="86" width="1200" height="20" forecolor="#2E4454" uuid="66a6b172-06ef-424e-8649-131dde541ba6"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Date Range:" + DATEFORMAT($F{startDate},"M/d/YYYY" ) + " - " + DATEFORMAT($F{endDate},"M/d/YYYY" )]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="106" width="1200" height="20" forecolor="#2E4454" uuid="099d7159-c86a-47b0-b298-aad3ef06cbb4"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Start Date: P" +$F{startPeriod} + ": W" + $F{startWeek} + ": D" + $F{startDayOfWeek}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="126" width="1200" height="20" forecolor="#2E4454" uuid="36cdc320-1627-4f2f-81b5-52e8e8e7bc78"/>
+				<box leftPadding="4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["End Date: P" +$F{endPeriod} + ": W" + $F{endWeek} + ": D" + $F{endDayOfWeek}]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="171" width="1200" height="5" forecolor="#1D5786" backcolor="#1D5786" uuid="6db722fc-bdb7-4f87-adae-afd126e815dc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="179" width="1200" height="2" forecolor="#ACD485" backcolor="#ACD485" uuid="9a93dbac-a25d-4541-a47a-1c18910eb179">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<image scaleImage="RealSize">
+				<reportElement x="0" y="0" width="1120" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:oneVIEWLogo" : "oneVIEW_ReportLogo.png"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement x="1120" y="0" width="80" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
+				<imageExpression><![CDATA[$F{brandLogo}]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<detail>
+		<band height="60" splitType="Stretch">
+			<componentElement>
+				<reportElement x="0" y="0" width="1200" height="60" uuid="08020a82-72cf-413c-b046-478d532ef743">
+					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+				</reportElement>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="ClosingSalesDataset" uuid="9441dc37-ea0a-47af-b749-c2d1233655d5">
+						<datasetParameter name="LoggedInUsername">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUsername}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="storeIdsTb">
+							<datasetParameterExpression><![CDATA[$P{storeIdsTb}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="date">
+							<datasetParameterExpression><![CDATA[$P{date}.getStart()]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:columnGroup width="1200" uuid="cd25fc51-d45f-435a-8bbf-96328ab9b91c">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [11]"/>
+						<jr:groupHeader groupName="areaGroup">
+							<jr:cell style="Table_CH" height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group 1 Header" x="0" y="0" width="1200" height="20" uuid="09f1d631-e92e-45f5-8037-d3ef8b50b575"/>
+									<box leftPadding="4"/>
+									<textElement verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{areaName}]]></textFieldExpression>
+								</textField>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:columnGroup width="1200" uuid="2047e2d3-daed-4395-a22e-1b48851a9d29">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [11]"/>
+							<jr:groupHeader groupName="regionGroup">
+								<jr:cell style="Table_CH" height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group 2 Header" x="0" y="0" width="1200" height="20" uuid="840d003d-55dc-4460-9dc4-c155ac848acf"/>
+										<box leftPadding="4"/>
+										<textElement verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{regionName}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupHeader>
+							<jr:column width="200" uuid="c640dadf-b1b6-4fe1-9574-52adc370fbae">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Table Footer" mode="Opaque" x="0" y="0" width="200" height="20" uuid="462a8fb7-8cad-4b37-974d-e4b7bc8fca53"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA["Totals:"]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="200" height="20" uuid="03ce30ae-ce52-4e03-aa8e-d7f56b282a16"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Store"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="200" height="20" uuid="e8c2d7d8-c955-4968-b5df-a0d80aabadd6"/>
+										<box leftPadding="4" rightPadding="0"/>
+										<textElement verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{storeNumber} + "-" +$F{storeName}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="db005d5e-7d2f-472b-98b4-923bb320ce3c">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="bf9acab8-3537-4e35-b97b-d6e5b3388d95">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="0e7a733b-849b-4f61-a4cf-f9628028e1ae"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Open"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="5e518828-f726-4700-b3db-250444e47f99"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{openingTime}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="3f5dbdd2-95c8-401c-bb50-822f54b3ce74">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8019f72e-2219-4796-bc52-1afc434af6ba">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="198504a4-472f-489f-a889-504745f27e92"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Close"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="05eb6716-5e8b-4ae5-8068-21a02dd5151b"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{closingTime}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="f57e9a8e-70ac-46df-aef3-7acbf064f958">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="92dafc56-0553-4e10-9c48-9108c25dd3f8">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1"/>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="0a9079f2-d1d4-482d-831d-a319e30ac9c1"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last Sale"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="4e7eba88-c52c-4c6d-8904-c8ca54784e3f"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{lastSale}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="d5b344ae-8a00-41ab-9bf3-0b5bcb62af57">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="6a21e0c2-bd44-4857-8b13-c03a699925c5">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{lostHours_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</jr:cell>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="d264e3cf-6fab-4ba0-bb21-be1509830dbf"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{lostHours_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="b31836bb-48ab-4a94-95e0-44f2495cb59a"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{lostHours_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="ba0821d7-b064-4242-88d8-3f4f9d736944"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Lost Hours"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="7073a088-4a2d-48c3-8429-61f87a31368d"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{lostHours}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="23be8d97-9ed8-49b5-a323-51b868f9ecc0">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8473597b-2a26-4bf1-a13a-9d614e6bbddf">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last30Count_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="a24bd4ac-1938-456b-9931-4ae48dd12e7f"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last30Count_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="d69359ad-dbcd-4b38-ab0a-13f58138dd67"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last30Count_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="e07d0578-1458-47db-b9dd-bdd92f500535"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last 30m"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="31f34235-0d1d-4a67-81af-ffd57c2f9654"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{last30Count}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="0c5380fb-bcf6-4915-a411-8d5bb89b5dce">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="5f364792-6fc1-40d5-b185-c15f45795b7a">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last60Count_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="f8e5897f-a4bd-4944-bc7b-acbded6da27f"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last60Count_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="36f714b5-1011-4c83-9688-964d7723ef01"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last60Count_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="e0cf1673-3816-4de2-ab06-54b97f0b4790"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last 60m"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="19936c6a-22f0-46a1-ad7c-f60d1193335f"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{last60Count}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="7235c248-6a3a-484f-b468-d77e10c5a051">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="07338fb5-7bed-4f34-bbb4-a562206fab53">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last120Count_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="bf85f83b-e07b-4b89-ac7d-2622569960ff"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last120Count_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="b0a83aab-6596-415d-b065-735cd30a4969"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last120Count_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="55805d14-7ca9-40dc-aeb8-17a60854a0e1"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last 120m"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="d276cb46-eda9-439a-a9b1-8c45c7eed652"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{last120Count}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="5f7b5e9f-4813-444c-9867-01e85635866d">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="65f2760e-65eb-45ed-9311-b9b1e7e835e3">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last30Dollars_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="a5f55cea-5116-4d80-afb5-edab03b5c02c"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last30Dollars_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="be3acfa5-671a-4316-ab5a-493f244da2a4"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last30Dollars_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="7a5f8faa-c0d0-41b0-8ed8-8701467384e0"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last 30 /$"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="3e04230b-0d8b-44a7-bcec-58569ccffd86"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{last30Dollars}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="146fe86f-dcb0-4dc7-9041-4802d2ccb540">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="661f68f1-3db2-47cc-a6a6-cc8dfd3b8f26">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last60Dollars_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="56790acb-b631-421c-b481-ffe7180c692d"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last60Dollars_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="81babc9c-bbd1-4264-8de6-6cf55ef4050a"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last60Dollars_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="c6a4f128-72c4-49a2-b795-bc8e9b6f881d"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last 60 /$"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="9b633e29-b054-49eb-b2b8-aee43ec8c1ff"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{last60Dollars}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+							<jr:column width="100" uuid="cf64c7f4-133f-41bc-93dd-763feff83b1f">
+								<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
+								<jr:tableFooter height="20" rowSpan="1">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement key="" mode="Opaque" x="0" y="0" width="100" height="20" uuid="4362b6e2-6288-46d3-8f4a-0e2940a64db8">
+											<property name="com.jaspersoft.studio.unit.height" value="px"/>
+										</reportElement>
+										<box rightPadding="4">
+											<topPen lineWidth="0.5" lineStyle="Dashed"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="12" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{last120Dollars_total}]]></textFieldExpression>
+									</textField>
+								</jr:tableFooter>
+								<jr:groupHeader groupName="areaGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+								</jr:groupHeader>
+								<jr:groupHeader groupName="regionGroup">
+									<jr:cell style="Table_CH" height="0" rowSpan="1">
+										<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									</jr:cell>
+								</jr:groupHeader>
+								<jr:groupFooter groupName="areaGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="83f2c14d-3c0b-486d-8be4-0b5e85cfade3"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last120Dollars_regionGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:groupFooter groupName="regionGroup">
+									<jr:cell style="Table_CH" height="20" rowSpan="1">
+										<textField isBlankWhenNull="true">
+											<reportElement x="0" y="0" width="100" height="20" uuid="4b5d8fc8-f672-4331-963a-9b787786ce66"/>
+											<box rightPadding="4"/>
+											<textElement textAlignment="Right">
+												<font size="12" isBold="true"/>
+											</textElement>
+											<textFieldExpression><![CDATA[$V{last120Dollars_areaGroup}]]></textFieldExpression>
+										</textField>
+									</jr:cell>
+								</jr:groupFooter>
+								<jr:columnHeader height="20" rowSpan="1">
+									<property name="com.jaspersoft.studio.unit.width" value="px"/>
+									<textField>
+										<reportElement style="Column Header" mode="Opaque" x="0" y="0" width="100" height="20" uuid="1bf7728a-deec-4dc7-88f3-8f31a4bb7eed"/>
+										<box leftPadding="4"/>
+										<textElement textAlignment="Left" verticalAlignment="Middle">
+											<font isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Last 120 /$"]]></textFieldExpression>
+									</textField>
+								</jr:columnHeader>
+								<jr:detailCell height="20">
+									<textField isBlankWhenNull="true">
+										<reportElement style="zebra" mode="Opaque" x="0" y="0" width="100" height="20" uuid="8eab960b-f2e4-4713-a16b-e8724c339173"/>
+										<box leftPadding="0" rightPadding="4"/>
+										<textElement textAlignment="Right" verticalAlignment="Middle"/>
+										<textFieldExpression><![CDATA[$F{last120Dollars}]]></textFieldExpression>
+									</textField>
+								</jr:detailCell>
+							</jr:column>
+						</jr:columnGroup>
+					</jr:columnGroup>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="75" splitType="Stretch">
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="10" width="1200" height="5" forecolor="#1D5786" backcolor="#1D5786" uuid="1995ce53-2bf8-4db1-9e2a-12a72125521e">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="5" width="1200" height="2" forecolor="#ACD485" backcolor="#ACD485" uuid="e3781c21-5b94-4e2b-9843-a23f8980bb07">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+			</rectangle>
+			<textField>
+				<reportElement style="Page Footer" x="0" y="15" width="1200" height="20" uuid="e98d250e-262d-45f0-a3d3-747277b0e914">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Report By: " + $P{LoggedInUserFullName} ?: "Unknown"]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd yyyy hh:mma" isBlankWhenNull="true">
+				<reportElement style="Page Footer" x="0" y="35" width="1200" height="20" uuid="f6e4629e-f87e-4694-b3ba-9c97aa17d4e8"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement style="Page Footer" mode="Transparent" x="0" y="55" width="50" height="20" uuid="90ede4cf-8b0f-4d80-97dd-1a0380495ddc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="true">
+				<reportElement style="Page Footer" mode="Transparent" x="50" y="55" width="1150" height="20" uuid="514a0634-62f9-4962-9df8-39c3881518d3">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="20">
+			<staticText>
+				<reportElement key="staticText-16" x="0" y="0" width="1200" height="20" uuid="694740cc-7585-48e7-840f-4cfd30758f08">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[No data for current selections]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

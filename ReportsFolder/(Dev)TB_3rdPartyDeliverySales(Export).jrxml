@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_3rdPartyDeliverySales" pageWidth="1340" pageHeight="1000" columnWidth="1300" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" uuid="baf20929-384e-4583-ae3e-34a14f54884d">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_3rdPartyDeliverySales" language="groovy" pageWidth="1820" pageHeight="1000" columnWidth="1780" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" uuid="baf20929-384e-4583-ae3e-34a14f54884d">
 	<property name="net.sf.jasperreports.export.xlsx.exclude.origin.band.pageFooter" value="pageFooter"/>
 	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
 	<property name="net.sf.jasperreports.export.xls.freeze.row" value="6"/>
-	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="true"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/jrtx/MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
 	<style name="zebra">
 		<box rightPadding="0"/>
 		<conditionalStyle>
@@ -56,33 +64,35 @@ SUM(COALESCE(summary.ubereats_sales,0)) AS uberEatsSales,
 SUM(COALESCE(summary.ubereats_trans,0)) AS uberEatsTrans,
 SUM(COALESCE(summary.doordash_sales,0)) AS doorDashSales, 
 SUM(COALESCE(summary.doordash_trans,0)) AS doorDashTrans,
-SUM(COALESCE(summaryLY.ubereats_sales,0)) AS uberEatsDollarsLY, 
-SUM(COALESCE(summaryLY.ubereats_trans,0)) AS uberEatsTransLY,
-SUM(COALESCE(summaryLY.doordash_sales,0)) AS doorDashDollarsLY, 
-SUM(COALESCE(summaryLY.doordash_trans,0)) AS doorDashTransLY
+SUM(COALESCE(summaryLy.ubereats_sales,0)) AS uberEatsDollarsLy, 
+SUM(COALESCE(summaryLy.ubereats_trans,0)) AS uberEatsTransLy,
+SUM(COALESCE(summaryLy.doordash_sales,0)) AS doorDashDollarsLy, 
+SUM(COALESCE(summaryLy.doordash_trans,0)) AS doorDashTransLy,
+SUM(IF(yoyLy.daily_sales_ty IS NULL, 0, COALESCE(paySaleLy.amount,grubhubFile.saleDollarsLy,0))) AS grubHubDollarsLy,
+SUM(IF(yoyLy.daily_sales_ty IS NULL, 0, COALESCE(paySaleLy.quantity,grubhubFile.saleTransactionsLy,0))) AS grubHubTransLy
 FROM org_tree ot
 JOIN org_brand brand ON (brand.brand_id = ot.brand_id AND brand.code = 'tb')
-JOIN c_store_access access ON (access.store_id = ot.store_id)
-JOIN c_user user ON (user.user_id = access.user_id AND user.username = $P{LoggedInUsername})
 JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
 JOIN c_calendar cal ON (cal.calendar_id = brand.calendar_id AND cal.date = c_date.mysql_date)
 JOIN agg_data_sales_yoy yoy ON (yoy.store_id = ot.store_id AND yoy.date = c_date.mysql_date)
+JOIN agg_data_sales_yoy yoyLy ON (yoyLy.store_id = ot.store_id AND yoyLy.date = cal.last_year_date)
 LEFT JOIN pos_taco_transaction_summary summary ON (summary.store_id = ot.store_id AND summary.date = c_date.mysql_date)
-LEFT JOIN pos_taco_transaction_summary summaryLY ON (summaryLY.store_id = ot.store_id AND summaryLY.date = cal.last_year_date AND summaryLY.id = summary.id)
+LEFT JOIN pos_taco_transaction_summary summaryLy ON (summaryLy.store_id = ot.store_id AND summaryLy.date = cal.last_year_date)
 LEFT JOIN pos_taco_alternate_payment_method paySale ON (paySale.store_id = ot.store_id AND paySale.date = c_date.mysql_date AND paySale.transaction_type IN ('SALE') AND paySale.payment_brand = 'GRUBHUB')
+LEFT JOIN pos_taco_alternate_payment_method paySaleLy ON (paySaleLy.store_id = ot.store_id AND paySaleLy.date = cal.last_year_date AND paySaleLy.transaction_type IN ('SALE') AND paySaleLy.payment_brand = 'GRUBHUB')
 LEFT JOIN (
 	SELECT 
 	cs.store_id,
 	c_date.mysql_date AS date,
 	SUM(IF(orders.delivery_pickup_departed_date_time_utc IS NULL AND orders.future_order_ind != 1, 0,orders.food_and_beverage_usd)) AS saleDollars,
-	SUM(IF(orders.delivery_pickup_departed_date_time_utc IS NULL AND orders.future_order_ind != 1, 0,1)) AS saleTransactions
+	SUM(IF(orders.delivery_pickup_departed_date_time_utc IS NULL AND orders.future_order_ind != 1, 0,1)) AS saleTransactions,
+	SUM(IF(ordersLy.delivery_pickup_departed_date_time_utc IS NULL AND ordersLy.future_order_ind != 1, 0,ordersLy.food_and_beverage_usd)) AS saleDollarsLy,
+	SUM(IF(ordersLy.delivery_pickup_departed_date_time_utc IS NULL AND ordersLy.future_order_ind != 1, 0,1)) AS saleTransactionsLy
 	FROM c_store cs 
-	JOIN org_bo ON (org_bo.bo_id = cs.bo_id AND org_bo.code = 'sabretooth')
 	JOIN c_store_info ON (c_store_info.store_id = cs.store_id AND c_store_info.in_reports = 1)
-	JOIN c_store_access access ON (access.store_id = cs.store_id)
-	JOIN c_user user ON (user.user_id = access.user_id AND user.username = $P{LoggedInUsername})
 	JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
 	JOIN pos_er_grubhub_orders orders ON (orders.store_id = cs.store_id AND orders.date = c_date.mysql_date)
+	LEFT JOIN pos_er_grubhub_orders ordersLy ON (ordersLy.store_id = cs.store_id AND ordersLy.date = c_date.mysql_date)
 	WHERE $X{IN, cs.store_id, storeIdsTb}
 	GROUP BY cs.store_id, c_date.mysql_date
 ) grubhubFile ON (grubhubFile.store_id = ot.store_id AND grubhubFile.date = c_date.mysql_date)
@@ -105,10 +115,12 @@ ORDER BY groupName, storeNumber]]>
 		<field name="endDatePass" class="java.util.Date"/>
 		<field name="doorDashSales" class="java.math.BigDecimal"/>
 		<field name="doorDashTrans" class="java.math.BigDecimal"/>
-		<field name="uberEatsDollarsLY" class="java.math.BigDecimal"/>
-		<field name="uberEatsTransLY" class="java.math.BigDecimal"/>
-		<field name="doorDashDollarsLY" class="java.math.BigDecimal"/>
-		<field name="doorDashTransLY" class="java.math.BigDecimal"/>
+		<field name="uberEatsDollarsLy" class="java.math.BigDecimal"/>
+		<field name="uberEatsTransLy" class="java.math.BigDecimal"/>
+		<field name="doorDashDollarsLy" class="java.math.BigDecimal"/>
+		<field name="doorDashTransLy" class="java.math.BigDecimal"/>
+		<field name="grubHubDollarsLy" class="java.math.BigDecimal"/>
+		<field name="grubHubTransLy" class="java.math.BigDecimal"/>
 		<variable name="ticketReportPath" class="java.lang.String">
 			<variableExpression><![CDATA["/Reports/Taco_Bell/Operations/TB_Ticket_Summary"]]></variableExpression>
 		</variable>
@@ -151,6 +163,18 @@ ORDER BY groupName, storeNumber]]>
 		<variable name="grubHubGrandNetSalesPct" class="java.math.BigDecimal">
 			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{grubHubGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
 		</variable>
+		<variable name="grubHubTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalDollarsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTransLy}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTransLy}]]></variableExpression>
+		</variable>
 		<variable name="uberEatsTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
 			<variableExpression><![CDATA[$F{uberEatsSales}]]></variableExpression>
 		</variable>
@@ -184,10 +208,16 @@ ORDER BY groupName, storeNumber]]>
 			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{uberEatsGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
 		</variable>
 		<variable name="uberEatsTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
-			<variableExpression><![CDATA[$F{uberEatsDollarsLY}]]></variableExpression>
+			<variableExpression><![CDATA[$F{uberEatsDollarsLy}]]></variableExpression>
 		</variable>
 		<variable name="uberEatsGrandDollarsLy" class="java.math.BigDecimal" calculation="Sum">
-			<variableExpression><![CDATA[$F{uberEatsDollarsLY}]]></variableExpression>
+			<variableExpression><![CDATA[$F{uberEatsDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTransLy}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTransLy}]]></variableExpression>
 		</variable>
 		<variable name="doorDashTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
 			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
@@ -222,6 +252,18 @@ ORDER BY groupName, storeNumber]]>
 		<variable name="doorDashGrandNetSalesPct" class="java.math.BigDecimal">
 			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
 		</variable>
+		<variable name="doorDashTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalDollarsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTransLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTransLy}]]></variableExpression>
+		</variable>
 		<group name="Group1">
 			<groupExpression><![CDATA[$F{groupName}]]></groupExpression>
 		</group>
@@ -244,11 +286,11 @@ ORDER BY groupName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateFormatted" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -307,22 +349,24 @@ DATE($P!{endDateFilter}) AS endDate
 				<graphicElement>
 					<pen lineWidth="0.0" lineStyle="Solid"/>
 				</graphicElement>
-				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "OdsLogo137x37.jpg"]]></imageExpression>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/images/logo.png" : "OdsLogo137x37.jpg"]]></imageExpression>
 			</image>
 			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
-				<reportElement x="1220" y="0" width="80" height="21" uuid="7292d94b-d0aa-402c-b49d-05225da819f5"/>
+				<reportElement x="1700" y="0" width="80" height="20" uuid="7292d94b-d0aa-402c-b49d-05225da819f5"/>
 				<box rightPadding="4"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{startDate}]]></textFieldExpression>
 			</textField>
 			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
-				<reportElement x="1220" y="21" width="80" height="22" uuid="5771a706-25ac-4398-a275-6b603fc2c3b6"/>
+				<reportElement x="1700" y="20" width="80" height="20" uuid="5771a706-25ac-4398-a275-6b603fc2c3b6"/>
 				<box rightPadding="4"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[$F{endDate}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="1140" y="0" width="80" height="21" uuid="dbf22155-c35f-4222-a754-f4ac9c4a9af5"/>
+				<reportElement x="1620" y="0" width="80" height="21" uuid="dbf22155-c35f-4222-a754-f4ac9c4a9af5">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
 				<box rightPadding="4"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font isBold="true"/>
@@ -330,7 +374,9 @@ DATE($P!{endDateFilter}) AS endDate
 				<textFieldExpression><![CDATA["Start Date"]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="1140" y="21" width="80" height="22" uuid="1543b14c-e483-4fdc-9d27-90dfdc07d39f"/>
+				<reportElement x="1620" y="20" width="80" height="21" uuid="1543b14c-e483-4fdc-9d27-90dfdc07d39f">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
 				<box rightPadding="4"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font isBold="true"/>
@@ -342,7 +388,7 @@ DATE($P!{endDateFilter}) AS endDate
 	<detail>
 		<band height="134" splitType="Stretch">
 			<componentElement>
-				<reportElement x="0" y="0" width="1300" height="134" uuid="d170075d-3b3f-4ad3-b8ec-399b297ed3ca">
+				<reportElement x="0" y="0" width="1781" height="134" uuid="d170075d-3b3f-4ad3-b8ec-399b297ed3ca">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 				</reportElement>
 				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
@@ -364,7 +410,7 @@ DATE($P!{endDateFilter}) AS endDate
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
-					<jr:columnGroup width="1540" uuid="6ebfceb8-ad74-4380-b03e-115a1cb80984">
+					<jr:columnGroup width="1780" uuid="6ebfceb8-ad74-4380-b03e-115a1cb80984">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [22]"/>
 						<jr:groupHeader groupName="Group1">
 							<jr:cell style="Table_CH" height="20" rowSpan="1">
@@ -380,7 +426,7 @@ DATE($P!{endDateFilter}) AS endDate
 									<textFieldExpression><![CDATA[$F{groupName}]]></textFieldExpression>
 								</textField>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Group" x="340" y="0" width="400" height="20" uuid="61441ef2-e37b-43f0-8621-4ac57910e6de"/>
+									<reportElement style="Group" x="340" y="0" width="480" height="20" uuid="61441ef2-e37b-43f0-8621-4ac57910e6de"/>
 									<box leftPadding="4">
 										<rightPen lineWidth="1.0"/>
 									</box>
@@ -390,7 +436,7 @@ DATE($P!{endDateFilter}) AS endDate
 									<textFieldExpression><![CDATA[""]]></textFieldExpression>
 								</textField>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Group" x="740" y="0" width="400" height="20" uuid="67279c4f-d1c2-452a-9890-972bc9e662f4"/>
+									<reportElement style="Group" x="820" y="0" width="480" height="20" uuid="67279c4f-d1c2-452a-9890-972bc9e662f4"/>
 									<box leftPadding="4">
 										<rightPen lineWidth="1.0"/>
 									</box>
@@ -400,7 +446,7 @@ DATE($P!{endDateFilter}) AS endDate
 									<textFieldExpression><![CDATA[""]]></textFieldExpression>
 								</textField>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Group" x="1140" y="0" width="400" height="20" uuid="fdcd35f8-cd6c-44cc-9b63-6d0b3d7d4c38"/>
+									<reportElement style="Group" x="1300" y="0" width="480" height="20" uuid="fdcd35f8-cd6c-44cc-9b63-6d0b3d7d4c38"/>
 									<box leftPadding="4">
 										<rightPen lineWidth="0.5"/>
 									</box>
@@ -415,7 +461,7 @@ DATE($P!{endDateFilter}) AS endDate
 							<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
 							<property name="com.jaspersoft.studio.unit.height" value="px"/>
 							<textField>
-								<reportElement style="Column" mode="Opaque" x="340" y="0" width="400" height="20" forecolor="#000000" backcolor="#85DE97" uuid="a6cbd033-d7c6-4757-8e83-0961c38f5bcc">
+								<reportElement style="Column" mode="Opaque" x="340" y="0" width="480" height="20" forecolor="#000000" backcolor="#85DE97" uuid="a6cbd033-d7c6-4757-8e83-0961c38f5bcc">
 									<property name="com.jaspersoft.studio.unit.height" value="px"/>
 								</reportElement>
 								<box>
@@ -427,7 +473,7 @@ DATE($P!{endDateFilter}) AS endDate
 								<textFieldExpression><![CDATA["GRUBHUB"]]></textFieldExpression>
 							</textField>
 							<textField>
-								<reportElement style="Column" mode="Opaque" x="740" y="0" width="400" height="20" forecolor="#000000" backcolor="#8CC3FA" uuid="7543a597-cf04-4cc0-9b3d-3f63a5ea5de3">
+								<reportElement style="Column" mode="Opaque" x="820" y="0" width="480" height="20" forecolor="#000000" backcolor="#8CC3FA" uuid="7543a597-cf04-4cc0-9b3d-3f63a5ea5de3">
 									<property name="com.jaspersoft.studio.unit.height" value="px"/>
 								</reportElement>
 								<box>
@@ -439,8 +485,9 @@ DATE($P!{endDateFilter}) AS endDate
 								<textFieldExpression><![CDATA["UBEREATS"]]></textFieldExpression>
 							</textField>
 							<textField>
-								<reportElement style="Column" mode="Opaque" x="1140" y="0" width="400" height="20" forecolor="#000000" backcolor="#F7B7EC" uuid="aec9bafd-70ce-41a4-9c3a-0309e709ba51">
+								<reportElement style="Column" mode="Opaque" x="1300" y="0" width="480" height="20" forecolor="#000000" backcolor="#F7B7EC" uuid="aec9bafd-70ce-41a4-9c3a-0309e709ba51">
 									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 								</reportElement>
 								<box>
 									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
@@ -704,7 +751,7 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Center" verticalAlignment="Middle">
 										<font size="10"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Total\nNet Sales $"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Total\nNet Sales \$"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
@@ -1032,11 +1079,11 @@ DATE($P!{endDateFilter}) AS endDate
 								</textField>
 							</jr:detailCell>
 						</jr:column>
-						<jr:column width="40" uuid="c7123186-b4f2-4b78-a493-b1e0f01b9418">
+						<jr:column width="80" uuid="c7123186-b4f2-4b78-a493-b1e0f01b9418">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
 							<jr:tableFooter height="22">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement style="Column" x="0" y="0" width="40" height="22" uuid="453f7db3-ac9e-4af8-a897-67c5296a7e27"/>
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="453f7db3-ac9e-4af8-a897-67c5296a7e27"/>
 									<box rightPadding="4">
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1046,13 +1093,13 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{grubHubGrandNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalDollarsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
 								<jr:cell height="22">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement style="Group" x="0" y="0" width="40" height="22" uuid="3acf8f67-6f68-4843-84e0-c12b6eceb575"/>
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="3acf8f67-6f68-4843-84e0-c12b6eceb575"/>
 										<box rightPadding="4">
 											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1062,13 +1109,14 @@ DATE($P!{endDateFilter}) AS endDate
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{grubHubTotalNetSalesPct}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{grubHubTotalDollarsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="40" height="30" forecolor="#000000" backcolor="#85DE97" uuid="c86f8cb4-ac36-40e2-9c6e-2a98a160c50d"/>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="c86f8cb4-ac36-40e2-9c6e-2a98a160c50d"/>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
@@ -1080,7 +1128,7 @@ DATE($P!{endDateFilter}) AS endDate
 							</jr:columnHeader>
 							<jr:detailCell height="20">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement x="0" y="0" width="40" height="20" uuid="ee8a800f-eeb6-437f-9797-0bf130ec2cd3"/>
+									<reportElement x="0" y="0" width="80" height="20" uuid="ee8a800f-eeb6-437f-9797-0bf130ec2cd3"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1089,15 +1137,15 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$V{grubHubNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{grubHubDollarsLy}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
-						<jr:column width="40" uuid="42d6cd15-78d5-4e9b-b43d-8d34ea79296b">
+						<jr:column width="80" uuid="42d6cd15-78d5-4e9b-b43d-8d34ea79296b">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
 							<jr:tableFooter height="22">
-								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement style="Column" x="0" y="0" width="40" height="22" uuid="4fcbe5d7-b649-469f-8000-09db19a25ba1"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="4fcbe5d7-b649-469f-8000-09db19a25ba1"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1108,13 +1156,13 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="10"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{grubHubGrandNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalTransactionsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
 								<jr:cell height="22">
-									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement style="Group" x="0" y="0" width="40" height="22" uuid="575e988b-cfdd-4d9c-8b90-c3716bf0ba9e"/>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="575e988b-cfdd-4d9c-8b90-c3716bf0ba9e"/>
 										<box rightPadding="4">
 											<pen lineWidth="0.5"/>
 											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1125,25 +1173,26 @@ DATE($P!{endDateFilter}) AS endDate
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="10"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{grubHubTotalNetSalesPct}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{grubHubTotalTransactionsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="40" height="30" forecolor="#000000" backcolor="#85DE97" uuid="ae6510cd-1ec4-4d3d-b6c0-1c7e0824f5ae"/>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="ae6510cd-1ec4-4d3d-b6c0-1c7e0824f5ae"/>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
 									<textElement textAlignment="Center" verticalAlignment="Middle">
 										<font size="10"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Transactions LY"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Trans LY"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
-								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement x="0" y="0" width="40" height="20" uuid="c1343206-ed2a-4225-bc46-a8da204fd924"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="c1343206-ed2a-4225-bc46-a8da204fd924"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1152,7 +1201,7 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$V{grubHubNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{grubHubTransLy}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
@@ -1450,11 +1499,11 @@ DATE($P!{endDateFilter}) AS endDate
 								</textField>
 							</jr:detailCell>
 						</jr:column>
-						<jr:column width="40" uuid="5dfd80c0-f969-42e4-a4f0-b832761c70e9">
+						<jr:column width="80" uuid="5dfd80c0-f969-42e4-a4f0-b832761c70e9">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column15"/>
 							<jr:tableFooter height="22">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement style="Column" x="0" y="0" width="40" height="22" uuid="0b95c75c-66d2-42f7-9ef9-e1fbf7e8674e"/>
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="0b95c75c-66d2-42f7-9ef9-e1fbf7e8674e"/>
 									<box rightPadding="4">
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1470,7 +1519,7 @@ DATE($P!{endDateFilter}) AS endDate
 							<jr:groupFooter groupName="Group1">
 								<jr:cell height="22">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement style="Group" x="0" y="0" width="40" height="22" uuid="826a8a5b-1a44-4e2c-97a3-132d371a2b4f"/>
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="826a8a5b-1a44-4e2c-97a3-132d371a2b4f"/>
 										<box rightPadding="4">
 											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1485,8 +1534,9 @@ DATE($P!{endDateFilter}) AS endDate
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="40" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="283b530e-55cf-451b-bf73-413ddf081937"/>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="283b530e-55cf-451b-bf73-413ddf081937"/>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
@@ -1498,7 +1548,7 @@ DATE($P!{endDateFilter}) AS endDate
 							</jr:columnHeader>
 							<jr:detailCell height="20">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement x="0" y="0" width="40" height="20" uuid="4d9028fe-d360-4b02-88f1-5c242236df58"/>
+									<reportElement x="0" y="0" width="80" height="20" uuid="4d9028fe-d360-4b02-88f1-5c242236df58"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1507,15 +1557,15 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{uberEatsDollarsLY}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{uberEatsDollarsLy}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
-						<jr:column width="40" uuid="4bff81d0-7847-48dd-b596-feb7afa23aa4">
+						<jr:column width="80" uuid="4bff81d0-7847-48dd-b596-feb7afa23aa4">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column16"/>
 							<jr:tableFooter height="22">
-								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement style="Column" x="0" y="0" width="40" height="22" uuid="2c205f74-da14-45e5-8b3a-ac22f5275452"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="2c205f74-da14-45e5-8b3a-ac22f5275452"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1526,13 +1576,13 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{uberEatsGrandNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandTotalTransactionsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
 								<jr:cell height="22">
-									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement style="Group" x="0" y="0" width="40" height="22" uuid="94a4f338-74c2-4928-84c4-24f6454a9245"/>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="94a4f338-74c2-4928-84c4-24f6454a9245"/>
 										<box rightPadding="4">
 											<pen lineWidth="0.5"/>
 											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1543,25 +1593,26 @@ DATE($P!{endDateFilter}) AS endDate
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{uberEatsTotalNetSalesPct}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalTransactionsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="40" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="1820d0de-4b40-4c94-a376-33f41a0e1762"/>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="1820d0de-4b40-4c94-a376-33f41a0e1762"/>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
 									<textElement textAlignment="Center" verticalAlignment="Middle">
 										<font size="10"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Transactions LY"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Trans LY"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
-								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement x="0" y="0" width="40" height="20" uuid="76c3014c-7e6e-4fd9-830a-23167e386f17"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="76c3014c-7e6e-4fd9-830a-23167e386f17"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1570,7 +1621,7 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{uberEatsTransLY}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{uberEatsTransLy}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
@@ -1614,7 +1665,9 @@ DATE($P!{endDateFilter}) AS endDate
 							<jr:columnHeader height="30">
 								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField>
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="5f83410c-768f-4724-9077-834847db54c2"/>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="5f83410c-768f-4724-9077-834847db54c2">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
@@ -1868,11 +1921,11 @@ DATE($P!{endDateFilter}) AS endDate
 								</textField>
 							</jr:detailCell>
 						</jr:column>
-						<jr:column width="40" uuid="95689077-01b3-4adf-8489-ecd0cda239ef">
+						<jr:column width="80" uuid="95689077-01b3-4adf-8489-ecd0cda239ef">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column21"/>
 							<jr:tableFooter height="22">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement style="Column" x="0" y="0" width="40" height="22" uuid="ec192eb4-b32e-4f1d-8de7-172ee0e161a1"/>
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="ec192eb4-b32e-4f1d-8de7-172ee0e161a1"/>
 									<box rightPadding="4">
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1882,13 +1935,13 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{doorDashGrandCheckAverage}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalDollarsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
 								<jr:cell height="22">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement style="Group" x="0" y="0" width="40" height="22" uuid="f5ecc634-2912-4bed-85cc-110cb1f4cdb2"/>
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="f5ecc634-2912-4bed-85cc-110cb1f4cdb2"/>
 										<box rightPadding="4">
 											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1898,13 +1951,14 @@ DATE($P!{endDateFilter}) AS endDate
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{doorDashTotalCheckAverage}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{doorDashTotalDollarsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="40" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="ef332524-df3b-436e-b0f6-4f0e055750f0"/>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="ef332524-df3b-436e-b0f6-4f0e055750f0"/>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
@@ -1916,7 +1970,7 @@ DATE($P!{endDateFilter}) AS endDate
 							</jr:columnHeader>
 							<jr:detailCell height="20">
 								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement x="0" y="0" width="40" height="20" uuid="46ccccf5-54ab-4e47-ab04-3f081deccc63"/>
+									<reportElement x="0" y="0" width="80" height="20" uuid="46ccccf5-54ab-4e47-ab04-3f081deccc63"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1925,15 +1979,15 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{doorDashDollarsLY}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{doorDashDollarsLy}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
-						<jr:column width="40" uuid="6d5516d2-44fe-4ece-90a3-fd8a5f1b0531">
+						<jr:column width="80" uuid="6d5516d2-44fe-4ece-90a3-fd8a5f1b0531">
 							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column22"/>
 							<jr:tableFooter height="22">
-								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement style="Column" x="0" y="0" width="40" height="22" uuid="8afea94f-1f7b-4c97-990d-7654025368af"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="8afea94f-1f7b-4c97-990d-7654025368af"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1942,15 +1996,15 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle">
-										<font size="10"/>
+										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{doorDashGrandNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalTransactionsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
 								<jr:cell height="22">
-									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement style="Group" x="0" y="0" width="40" height="22" uuid="df55e016-72cd-41f8-accb-0bcb714644bc"/>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="df55e016-72cd-41f8-accb-0bcb714644bc"/>
 										<box rightPadding="4">
 											<pen lineWidth="0.5"/>
 											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1959,29 +2013,28 @@ DATE($P!{endDateFilter}) AS endDate
 											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
-											<font size="10"/>
+											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{doorDashTotalNetSalesPct}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{doorDashTotalTransactionsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
 							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
 								<textField isBlankWhenNull="true">
-									<reportElement style="Column" mode="Opaque" x="0" y="0" width="40" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="b380ed59-d943-4cfc-903c-953a93e755e6">
-										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-									</reportElement>
+									<reportElement style="Column" positionType="FixRelativeToBottom" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="b380ed59-d943-4cfc-903c-953a93e755e6"/>
 									<box>
 										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
 									</box>
 									<textElement textAlignment="Center" verticalAlignment="Middle">
 										<font size="10"/>
 									</textElement>
-									<textFieldExpression><![CDATA["Transactions LY"]]></textFieldExpression>
+									<textFieldExpression><![CDATA["Trans LY"]]></textFieldExpression>
 								</textField>
 							</jr:columnHeader>
 							<jr:detailCell height="20">
-								<textField pattern="#,##0.00" isBlankWhenNull="true">
-									<reportElement x="0" y="0" width="40" height="20" uuid="a3e129e7-befa-4a8f-b98d-5b1fb1cfe752"/>
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="a3e129e7-befa-4a8f-b98d-5b1fb1cfe752"/>
 									<box rightPadding="4">
 										<pen lineWidth="0.5"/>
 										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -1990,7 +2043,7 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle"/>
-									<textFieldExpression><![CDATA[$F{doorDashTransLY}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$F{doorDashTransLy}]]></textFieldExpression>
 								</textField>
 							</jr:detailCell>
 						</jr:column>
@@ -2002,21 +2055,21 @@ DATE($P!{endDateFilter}) AS endDate
 	<pageFooter>
 		<band height="44" splitType="Stretch">
 			<textField evaluationTime="Report" isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="1260" y="20" width="40" height="24" uuid="3ddf5470-9275-474c-9221-e8c402d5ac9f"/>
+				<reportElement mode="Transparent" x="1700" y="0" width="80" height="24" uuid="3ddf5470-9275-474c-9221-e8c402d5ac9f"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="SansSerif" size="10" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="1180" y="20" width="80" height="24" uuid="1ef0d1f5-bf83-4a81-9d0a-7e81a3f4e31a"/>
+				<reportElement mode="Transparent" x="1620" y="0" width="80" height="24" uuid="1ef0d1f5-bf83-4a81-9d0a-7e81a3f4e31a"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="SansSerif" size="10" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement key="textField-13" x="61" y="0" width="73" height="24" uuid="00b59076-fb12-4309-99c2-bc3c8b579357"/>
+				<reportElement key="textField-13" x="180" y="0" width="159" height="24" uuid="00b59076-fb12-4309-99c2-bc3c8b579357"/>
 				<box>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -2029,7 +2082,7 @@ DATE($P!{endDateFilter}) AS endDate
 				<textFieldExpression><![CDATA[$P{LoggedInUserFullName} == null ? "Unknown" : $P{LoggedInUserFullName}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement key="textField-12" x="0" y="0" width="61" height="24" uuid="5028a844-1f44-4081-85f8-e6f3c2690519">
+				<reportElement key="textField-12" x="0" y="0" width="179" height="24" uuid="5028a844-1f44-4081-85f8-e6f3c2690519">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="local_mesure_unitx" value="pixel"/>
 				</reportElement>
@@ -2045,7 +2098,7 @@ DATE($P!{endDateFilter}) AS endDate
 				<textFieldExpression><![CDATA["Report By:"]]></textFieldExpression>
 			</textField>
 			<textField pattern="MMMMM dd yyyy hh:mma" isBlankWhenNull="true">
-				<reportElement x="0" y="24" width="197" height="20" uuid="4438d797-bf9a-40e1-b3ea-808544a7943e"/>
+				<reportElement x="0" y="24" width="180" height="20" uuid="4438d797-bf9a-40e1-b3ea-808544a7943e"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="SansSerif" size="10" isBold="false"/>
 				</textElement>
@@ -2056,7 +2109,7 @@ DATE($P!{endDateFilter}) AS endDate
 	<noData>
 		<band height="24">
 			<staticText>
-				<reportElement key="staticText-16" x="0" y="0" width="1300" height="24" uuid="11e2ea8b-8e00-436c-ab22-ae957fbd5595"/>
+				<reportElement key="staticText-16" x="0" y="0" width="1780" height="24" uuid="11e2ea8b-8e00-436c-ab22-ae957fbd5595"/>
 				<box>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>

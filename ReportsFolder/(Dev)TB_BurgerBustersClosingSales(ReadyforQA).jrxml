@@ -203,14 +203,14 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="date" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="date" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateGetStart" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>

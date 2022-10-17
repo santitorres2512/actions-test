@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_3rdPartyDeliverySales" pageWidth="1340" pageHeight="1000" columnWidth="1300" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" uuid="baf20929-384e-4583-ae3e-34a14f54884d">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_3rdPartyDeliverySales" pageWidth="1740" pageHeight="1000" columnWidth="1700" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" uuid="baf20929-384e-4583-ae3e-34a14f54884d">
 	<property name="net.sf.jasperreports.export.xlsx.exclude.origin.band.pageFooter" value="pageFooter"/>
 	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
 	<property name="net.sf.jasperreports.export.xls.freeze.row" value="6"/>
-	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/jrtx/MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
 	<style name="zebra">
 		<box rightPadding="0"/>
 		<conditionalStyle>
@@ -189,6 +196,12 @@ ORDER BY groupName, storeNumber]]>
 		<variable name="uberEatsGrandDollarsLy" class="java.math.BigDecimal" calculation="Sum">
 			<variableExpression><![CDATA[$F{uberEatsDollarsLY}]]></variableExpression>
 		</variable>
+		<variable name="uberEatsTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTransLY}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTransLY}]]></variableExpression>
+		</variable>
 		<variable name="doorDashTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
 			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
 		</variable>
@@ -222,6 +235,18 @@ ORDER BY groupName, storeNumber]]>
 		<variable name="doorDashGrandNetSalesPct" class="java.math.BigDecimal">
 			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
 		</variable>
+		<variable name="doorDashTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashDollarsLY}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalDollarsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashDollarsLY}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTransLY}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTransLY}]]></variableExpression>
+		</variable>
 		<group name="Group1">
 			<groupExpression><![CDATA[$F{groupName}]]></groupExpression>
 		</group>
@@ -244,11 +269,11 @@ ORDER BY groupName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateFormatted" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -307,7 +332,7 @@ DATE($P!{endDateFilter}) AS endDate
 				<graphicElement>
 					<pen lineWidth="0.0" lineStyle="Solid"/>
 				</graphicElement>
-				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "OdsLogo137x37.jpg"]]></imageExpression>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/images/logo.png" : "OdsLogo137x37.jpg"]]></imageExpression>
 			</image>
 			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
 				<reportElement x="1220" y="0" width="80" height="21" uuid="7292d94b-d0aa-402c-b49d-05225da819f5"/>
@@ -342,7 +367,7 @@ DATE($P!{endDateFilter}) AS endDate
 	<detail>
 		<band height="134" splitType="Stretch">
 			<componentElement>
-				<reportElement x="0" y="0" width="1300" height="134" uuid="d170075d-3b3f-4ad3-b8ec-399b297ed3ca">
+				<reportElement x="0" y="0" width="1650" height="134" uuid="d170075d-3b3f-4ad3-b8ec-399b297ed3ca">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 				</reportElement>
 				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
@@ -1526,7 +1551,7 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{uberEatsGrandNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandTotalTransactionsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
@@ -1543,7 +1568,7 @@ DATE($P!{endDateFilter}) AS endDate
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{uberEatsTotalNetSalesPct}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalTransactionsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -1882,7 +1907,7 @@ DATE($P!{endDateFilter}) AS endDate
 									<textElement textAlignment="Right" verticalAlignment="Middle">
 										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{doorDashGrandCheckAverage}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalDollarsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
@@ -1898,7 +1923,7 @@ DATE($P!{endDateFilter}) AS endDate
 										<textElement textAlignment="Right" verticalAlignment="Middle">
 											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{doorDashTotalCheckAverage}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{doorDashTotalDollarsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>
@@ -1942,9 +1967,9 @@ DATE($P!{endDateFilter}) AS endDate
 										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 									</box>
 									<textElement textAlignment="Right" verticalAlignment="Middle">
-										<font size="10"/>
+										<font size="10" isBold="true"/>
 									</textElement>
-									<textFieldExpression><![CDATA[$V{doorDashGrandNetSalesPct}]]></textFieldExpression>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalTransactionsLy}]]></textFieldExpression>
 								</textField>
 							</jr:tableFooter>
 							<jr:groupFooter groupName="Group1">
@@ -1959,9 +1984,9 @@ DATE($P!{endDateFilter}) AS endDate
 											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 										</box>
 										<textElement textAlignment="Right" verticalAlignment="Middle">
-											<font size="10"/>
+											<font size="10" isBold="true"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$V{doorDashTotalNetSalesPct}]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$V{doorDashTotalTransactionsLy}]]></textFieldExpression>
 									</textField>
 								</jr:cell>
 							</jr:groupFooter>

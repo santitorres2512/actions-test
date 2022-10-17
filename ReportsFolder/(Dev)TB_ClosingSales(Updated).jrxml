@@ -31,7 +31,27 @@
 		</conditionalStyle>
 		<conditionalStyle>
 			<conditionExpression><![CDATA[$F{lostHours} > 0]]></conditionExpression>
-			<style mode="Opaque" forecolor="#000000" backcolor="#FA980F"/>
+			<style mode="Opaque"/>
+		</conditionalStyle>
+	</style>
+	<style name="lostHoursStyleArea" style="Group 1 Footer">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_areaGroup} < -30]]></conditionExpression>
+			<style backcolor="#FA2723"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_areaGroup} > 0]]></conditionExpression>
+			<style mode="Opaque"/>
+		</conditionalStyle>
+	</style>
+	<style name="lostHoursStyleRegion" style="Group 1 Footer">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_regionGroup} < -30]]></conditionExpression>
+			<style backcolor="#FA2723"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{lostHours_regionGroup} > 0]]></conditionExpression>
+			<style mode="Opaque"/>
 		</conditionalStyle>
 	</style>
 	<subDataset name="ClosingSalesDataset" uuid="4750145e-5a3a-44d6-8e06-25e6bd60f058">
@@ -44,64 +64,42 @@
 		<parameter name="date" class="java.util.Date"/>
 		<queryString>
 			<![CDATA[SELECT 
-org_area.name AS areaName, 
-org_region.name AS regionName, 
-cs.store_number AS storeNumber, 
-cs.store_name AS storeName,
-IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_open_mon,info.store_open_sat) AS openingTime, 
-IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_close_mon,info.store_close_sat) AS closingTime, 
-storeTotals.lastSale,
-storeTotals.lostHours,
-storeTotals.last30Count,
-storeTotals.last60Count,
-storeTotals.last120Count,
-storeTotals.last30Dollars,
-storeTotals.last60Dollars,
-storeTotals.last120Dollars
-FROM c_store cs 
-JOIN org_brand ON (org_brand.brand_id = cs.brand_id AND org_brand.code = 'tb')
-JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
-JOIN org_area ON (org_area.area_id = cs.area_id)
-JOIN org_region ON (org_region.region_id = cs.region_id)
-JOIN c_store_access ON (c_store_access.store_id = cs.store_id) 
+ot.area AS areaName, 
+ot.region AS regionName, 
+ot.store_number AS storeNumber, 
+ot.store_name AS storeName,
+IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_open_mon,info.store_open_sat) AS openingTime, 
+IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_close_mon,info.store_close_sat) AS closingTime, 
+MAX(TIME(header.begin_date_time)) AS lastSale,
+ROUND(TIME_TO_SEC(TIMEDIFF(MAX(TIME(header.begin_date_time)), IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4),info.store_close_mon,TIME(info.store_close_sat))))/60) AS lostHours,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, 1, 0)
+ )) AS last30Count,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, 1, 0)
+ )) AS last60Count,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, 1, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, 1, 0)
+ )) AS last120Count,
+ SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last30Dollars,
+SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last60Dollars,
+ SUM(IF(DATE_FORMAT(header.date, '%w') IN (0,1,2,3,4) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, header.transaction_net_amount, 
+    IF(DATE_FORMAT(header.date, '%w') IN (5,6) AND TIME(header.begin_date_time) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, header.transaction_net_amount, 0)
+ )) AS last120Dollars
+FROM org_tree ot 
+JOIN org_brand ON (org_brand.brand_id = ot.brand_id AND org_brand.code = 'tb')
+JOIN c_store_info info ON (info.store_id = ot.store_id)
+JOIN c_date ON ($X{EQUAL, c_date.mysql_date, date})
+JOIN c_store_access ON (c_store_access.store_id = ot.store_id) 
 JOIN c_user ON (c_user.user_id = c_store_access.user_id AND c_user.username = $P{LoggedInUsername})
-LEFT JOIN (
-	SELECT
-	ticketDetail.store_id,
-	MAX(TIME(ticketDetail.ticketTime)) AS lastSale,
-	ROUND(TIME_TO_SEC(TIMEDIFF(MAX(TIME(ticketDetail.ticketTime)), IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_close_mon,TIME(info.store_close_sat))))/60) AS lostHours,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, 1, 0)
-	 )) AS last30Count,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, 1, 0)
-	 )) AS last60Count,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, 1, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, 1, 0)
-	 )) AS last120Count,
-	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 30 minute)) AND info.store_close_mon, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 30 minute) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 30 minute)) AND info.store_close_fri, ticketDetail.ticketAmount, 0)
-	 )) AS last30Dollars,
-	SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 1 hour)) AND info.store_close_mon, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 1 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 1 hour)) AND info.store_close_fri, ticketDetail.ticketAmount, 0)
-	 )) AS last60Dollars,
-	 SUM(IF($P!{dayOfWeek} IN (0,1,2,3,4) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_mon, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_mon, INTERVAL 2 hour)) AND info.store_close_mon, ticketDetail.ticketAmount, 
-		IF($P!{dayOfWeek} IN (5,6) AND TIME(ticketDetail.ticketTime) BETWEEN IF(DATE_SUB(store_close_fri, INTERVAL 2 hour) = "00:00:00", "24:00:00",  DATE_SUB(info.store_close_fri, INTERVAL 2 hour)) AND info.store_close_fri, ticketDetail.ticketAmount, 0)
-	 )) AS last120Dollars
-	 FROM (
-			SELECT 
-			store_id,
-			header.begin_date_time AS ticketTime,
-			header.transaction_net_amount AS ticketAmount
-			FROM pos_taco_transaction_header header 
-			WHERE $X{EQUAL, header.date, date}
-			AND $X{IN, header.store_id, storeIdsTb}
-			AND header.transaction_status = 'Finished' 
-		) ticketDetail
-		JOIN c_store_info info ON (info.store_id = ticketDetail.store_id)
-		GROUP BY info.store_id
-) storeTotals ON (storeTotals.store_id = cs.store_id)
-WHERE $X{IN, cs.store_id, storeIdsTb}
+LEFT JOIN pos_taco_transaction_header header ON (header.store_id = ot.store_id AND header.date = c_date.mysql_date)
+
+WHERE  $X{IN, header.store_id, storeIdsTb}
+AND ot.in_reports = 1
 GROUP BY storeNumber
 ORDER BY regionName, areaName, storeNumber]]>
 		</queryString>
@@ -114,7 +112,7 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<field name="lostHours" class="java.lang.Integer"/>
 		<field name="last30Count" class="java.lang.Integer"/>
 		<field name="last60Count" class="java.lang.Integer"/>
-		<field name="last120Count" class="java.lang.Integer"/>
+		<field name="last120Count" class="java.sql.Time"/>
 		<field name="last30Dollars" class="java.math.BigDecimal"/>
 		<field name="last60Dollars" class="java.math.BigDecimal"/>
 		<field name="last120Dollars" class="java.math.BigDecimal"/>
@@ -203,14 +201,14 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="date" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="date" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateGetStart" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -231,7 +229,6 @@ ORDER BY regionName, areaName, storeNumber]]>
 (($P{WeekDatesTb} != null)? $P{WeekDatesTb} :
 $P{startDateGetStart})]]></defaultValueExpression>
 	</parameter>
-	<parameter name="dayOfWeek" class="java.lang.Integer"/>
 	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[($P{PeriodDatesTb} != null)? new java.lang.String("(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1))))") :
@@ -303,11 +300,11 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 				</reportElement>
 			</rectangle>
 			<image scaleImage="RealSize">
-				<reportElement x="0" y="0" width="1100" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
+				<reportElement x="0" y="0" width="1120" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
 				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "oneVIEWReportLogo.png"]]></imageExpression>
 			</image>
 			<image>
-				<reportElement x="1100" y="0" width="100" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
+				<reportElement x="1120" y="0" width="80" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
 				<imageExpression><![CDATA[$F{brandLogo}]]></imageExpression>
 			</image>
 		</band>
@@ -662,7 +659,7 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 							<jr:groupFooter groupName="Group2">
 								<jr:cell height="20" rowSpan="1">
 									<textField pattern="#,##0.00" isBlankWhenNull="true">
-										<reportElement key="" style="Group 2 Footer" mode="Opaque" x="0" y="0" width="100" height="20" uuid="1d83166b-490f-4e0c-b427-2ae4ec5c5bdb">
+										<reportElement key="" style="lostHoursStyleRegion" mode="Opaque" x="0" y="0" width="100" height="20" uuid="1d83166b-490f-4e0c-b427-2ae4ec5c5bdb">
 											<property name="com.jaspersoft.studio.unit.height" value="px"/>
 										</reportElement>
 										<box rightPadding="4">

@@ -203,14 +203,14 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="date" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="date" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateGetStart" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -231,7 +231,6 @@ ORDER BY regionName, areaName, storeNumber]]>
 (($P{WeekDatesTb} != null)? $P{WeekDatesTb} :
 $P{startDateGetStart})]]></defaultValueExpression>
 	</parameter>
-	<parameter name="dayOfWeek" class="java.lang.Integer"/>
 	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[($P{PeriodDatesTb} != null)? new java.lang.String("(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1))))") :

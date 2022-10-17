@@ -50,14 +50,14 @@ cs.store_number AS storeNumber,
 cs.store_name AS storeName,
 IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_open_mon,info.store_open_sat) AS openingTime, 
 IF($P!{dayOfWeek} IN (0,1,2,3,4),info.store_close_mon,info.store_close_sat) AS closingTime, 
-storeTotals.lastSale,
-storeTotals.lostHours,
-storeTotals.last30Count,
-storeTotals.last60Count,
-storeTotals.last120Count,
-storeTotals.last30Dollars,
-storeTotals.last60Dollars,
-storeTotals.last120Dollars
+storeTotals.lastSale AS lastSale,
+storeTotals.lostHours AS lostHours,
+storeTotals.last30Count AS last30Count,
+storeTotals.last60Count AS last60Count,
+storeTotals.last120Count AS last120Count,
+storeTotals.last30Dollars AS last30Dollars,
+storeTotals.last60Dollars AS last60Dollars,
+storeTotals.last120Dollars AS last120Dollars
 FROM c_store cs 
 JOIN org_brand ON (org_brand.brand_id = cs.brand_id AND org_brand.code = 'tb')
 JOIN c_store_info info ON (info.store_id = cs.store_id AND info.in_reports = 1)
@@ -114,7 +114,7 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<field name="lostHours" class="java.lang.Integer"/>
 		<field name="last30Count" class="java.lang.Integer"/>
 		<field name="last60Count" class="java.lang.Integer"/>
-		<field name="last120Count" class="java.lang.Integer"/>
+		<field name="last120Count" class="java.sql.Time"/>
 		<field name="last30Dollars" class="java.math.BigDecimal"/>
 		<field name="last60Dollars" class="java.math.BigDecimal"/>
 		<field name="last120Dollars" class="java.math.BigDecimal"/>
@@ -203,14 +203,14 @@ ORDER BY regionName, areaName, storeNumber]]>
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="date" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="date" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="startDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
-	<parameter name="endDate" class="com.monolithss.abovestore.jr.date.JRTimestampRange">
-		<defaultValueExpression><![CDATA[new com.monolithss.abovestore.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
 	</parameter>
 	<parameter name="startDateGetStart" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
@@ -231,7 +231,6 @@ ORDER BY regionName, areaName, storeNumber]]>
 (($P{WeekDatesTb} != null)? $P{WeekDatesTb} :
 $P{startDateGetStart})]]></defaultValueExpression>
 	</parameter>
-	<parameter name="dayOfWeek" class="java.lang.Integer"/>
 	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA[($P{PeriodDatesTb} != null)? new java.lang.String("(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='wendys') WHERE date > " + $P{PeriodDatesTb} + " AND day_of_period=1 ORDER BY date ASC LIMIT 1))))") :
@@ -303,11 +302,11 @@ JOIN c_calendar endCal ON (endCal.calendar_id  = org_brand.calendar_id AND endCa
 				</reportElement>
 			</rectangle>
 			<image scaleImage="RealSize">
-				<reportElement x="0" y="0" width="1100" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
+				<reportElement x="0" y="0" width="1120" height="56" uuid="b1188c9f-afdd-4ec7-b1f8-a0dee8150f41"/>
 				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "repo:Logo" : "oneVIEWReportLogo.png"]]></imageExpression>
 			</image>
 			<image>
-				<reportElement x="1100" y="0" width="100" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
+				<reportElement x="1120" y="0" width="80" height="56" uuid="711d30b3-cefd-476e-9480-20f282f34804"/>
 				<imageExpression><![CDATA[$F{brandLogo}]]></imageExpression>
 			</image>
 		</band>
