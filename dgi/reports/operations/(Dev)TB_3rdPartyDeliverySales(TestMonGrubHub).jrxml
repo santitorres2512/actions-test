@@ -1,0 +1,2126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 7.9.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TB_3rdPartyDeliverySales" language="groovy" pageWidth="1820" pageHeight="1000" columnWidth="1780" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isSummaryNewPage="true" uuid="baf20929-384e-4583-ae3e-34a14f54884d">
+	<property name="net.sf.jasperreports.export.xlsx.exclude.origin.band.pageFooter" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.pageFooter" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.row" value="6"/>
+	<property name="net.sf.jasperreports.print.create.bookmarks" value="true"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<template><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/jrtx/MainStyle.jrtx" : "MainStyle.jrtx"]]></template>
+	<style name="zebra">
+		<box rightPadding="0"/>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{PAGE_COUNT}.intValue() % 2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#D4D4D4">
+				<box leftPadding="0" rightPadding="0">
+					<topPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+			</style>
+		</conditionalStyle>
+	</style>
+	<subDataset name="3rdPartyDelivery" uuid="52d51285-ae00-4080-8fb2-e733187eb77d">
+		<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="369"/>
+		<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="626"/>
+		<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+		<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false">
+			<defaultValueExpression><![CDATA[$P{LoggedInUser}.getUsername()]]></defaultValueExpression>
+		</parameter>
+		<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+			<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+		</parameter>
+		<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+		</parameter>
+		<parameter name="storeIdsTb" class="java.util.List">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+		</parameter>
+		<parameter name="groupBy" class="java.lang.String">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
+		</parameter>
+		<parameter name="startDateFilter" class="java.lang.String"/>
+		<parameter name="endDateFilter" class="java.lang.String"/>
+		<queryString>
+			<![CDATA[SELECT 
+ot.store_id AS store_id,
+DATE($P!{startDateFilter}) AS startDatePass,
+DATE($P!{endDateFilter}) AS endDatePass,
+ot.$P!{groupBy} AS groupName,
+ot.store_number AS storeNumber,
+ot.store_name As storeName,
+c_date.mysql_date AS `date`,
+SUM(COALESCE(yoy.daily_sales_ty,0)) AS totalNetSales,
+SUM(IF(yoy.daily_sales_ty IS NULL, 0, COALESCE(paySale.amount,grubhubFile.saleDollars,0))) AS grubHubSales,
+SUM(IF(yoy.daily_sales_ty IS NULL, 0, COALESCE(paySale.quantity,grubhubFile.saleTransactions,0))) AS grubHubTrans,
+SUM(COALESCE(summary.ubereats_sales,0)) AS uberEatsSales, 
+SUM(COALESCE(summary.ubereats_trans,0)) AS uberEatsTrans,
+SUM(COALESCE(summary.doordash_sales,0)) AS doorDashSales, 
+SUM(COALESCE(summary.doordash_trans,0)) AS doorDashTrans,
+SUM(COALESCE(summaryLy.ubereats_sales,0)) AS uberEatsDollarsLy, 
+SUM(COALESCE(summaryLy.ubereats_trans,0)) AS uberEatsTransLy,
+SUM(COALESCE(summaryLy.doordash_sales,0)) AS doorDashDollarsLy, 
+SUM(COALESCE(summaryLy.doordash_trans,0)) AS doorDashTransLy,
+SUM(IF(yoyLy.daily_sales_ty IS NULL, 0, COALESCE(paySaleLy.amount,grubhubFile.saleDollarsLy,0))) AS grubHubDollarsLy,
+SUM(IF(yoyLy.daily_sales_ty IS NULL, 0, COALESCE(paySaleLy.quantity,grubhubFile.saleTransactionsLy,0))) AS grubHubTransLy
+FROM org_tree ot
+JOIN org_brand brand ON (brand.brand_id = ot.brand_id AND brand.code = 'tb')
+JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
+JOIN c_calendar cal ON (cal.calendar_id = brand.calendar_id AND cal.date = c_date.mysql_date)
+JOIN agg_data_sales_yoy yoy ON (yoy.store_id = ot.store_id AND yoy.date = c_date.mysql_date)
+JOIN agg_data_sales_yoy yoyLy ON (yoyLy.store_id = ot.store_id AND yoyLy.date = cal.last_year_date)
+LEFT JOIN pos_taco_transaction_summary summary ON (summary.store_id = ot.store_id AND summary.date = c_date.mysql_date)
+LEFT JOIN pos_taco_transaction_summary summaryLy ON (summaryLy.store_id = ot.store_id AND summaryLy.date = cal.last_year_date)
+LEFT JOIN pos_taco_alternate_payment_method paySale ON (paySale.store_id = ot.store_id AND paySale.date = c_date.mysql_date AND paySale.transaction_type IN ('SALE') AND paySale.payment_brand = 'GRUBHUB')
+LEFT JOIN pos_taco_alternate_payment_method paySaleLy ON (paySaleLy.store_id = ot.store_id AND paySaleLy.date = cal.last_year_date AND paySaleLy.transaction_type IN ('SALE') AND paySaleLy.payment_brand = 'GRUBHUB')
+LEFT JOIN (
+	SELECT 
+	cs.store_id,
+	c_date.mysql_date AS date,
+	SUM(IF(orders.delivery_pickup_departed_date_time_utc IS NULL AND orders.future_order_ind != 1, 0,orders.food_and_beverage_usd)) AS saleDollars,
+	SUM(IF(orders.delivery_pickup_departed_date_time_utc IS NULL AND orders.future_order_ind != 1, 0,1)) AS saleTransactions,
+	SUM(IF(ordersLy.delivery_pickup_departed_date_time_utc IS NULL AND ordersLy.future_order_ind != 1, 0,ordersLy.food_and_beverage_usd)) AS saleDollarsLy,
+	SUM(IF(ordersLy.delivery_pickup_departed_date_time_utc IS NULL AND ordersLy.future_order_ind != 1, 0,1)) AS saleTransactionsLy
+	FROM c_store cs 
+	JOIN c_store_info ON (c_store_info.store_id = cs.store_id AND c_store_info.in_reports = 1)
+	JOIN c_date ON (c_date.mysql_date BETWEEN DATE($P!{startDateFilter}) AND DATE($P!{endDateFilter}))
+	JOIN pos_er_grubhub_orders orders ON (orders.store_id = cs.store_id AND orders.date = c_date.mysql_date)
+	LEFT JOIN pos_er_grubhub_orders ordersLy ON (ordersLy.store_id = cs.store_id AND ordersLy.date = c_date.mysql_date)
+	WHERE $X{IN, cs.store_id, storeIdsTb}
+	GROUP BY cs.store_id, c_date.mysql_date
+) grubhubFile ON (grubhubFile.store_id = ot.store_id AND grubhubFile.date = c_date.mysql_date)
+WHERE ot.in_reports = 1
+AND $X{IN, ot.store_id, storeIdsTb}
+GROUP BY groupName, storeNumber
+ORDER BY groupName, storeNumber]]>
+		</queryString>
+		<field name="store_id" class="java.lang.String"/>
+		<field name="groupName" class="java.lang.String"/>
+		<field name="storeNumber" class="java.lang.String"/>
+		<field name="storeName" class="java.lang.String"/>
+		<field name="date" class="java.util.Date"/>
+		<field name="totalNetSales" class="java.math.BigDecimal"/>
+		<field name="grubHubSales" class="java.math.BigDecimal"/>
+		<field name="grubHubTrans" class="java.math.BigDecimal"/>
+		<field name="uberEatsSales" class="java.math.BigDecimal"/>
+		<field name="uberEatsTrans" class="java.math.BigDecimal"/>
+		<field name="startDatePass" class="java.util.Date"/>
+		<field name="endDatePass" class="java.util.Date"/>
+		<field name="doorDashSales" class="java.math.BigDecimal"/>
+		<field name="doorDashTrans" class="java.math.BigDecimal"/>
+		<field name="uberEatsDollarsLy" class="java.math.BigDecimal"/>
+		<field name="uberEatsTransLy" class="java.math.BigDecimal"/>
+		<field name="doorDashDollarsLy" class="java.math.BigDecimal"/>
+		<field name="doorDashTransLy" class="java.math.BigDecimal"/>
+		<field name="grubHubDollarsLy" class="java.math.BigDecimal"/>
+		<field name="grubHubTransLy" class="java.math.BigDecimal"/>
+		<variable name="ticketReportPath" class="java.lang.String">
+			<variableExpression><![CDATA["/Reports/Taco_Bell/Operations/TB_Ticket_Summary"]]></variableExpression>
+		</variable>
+		<variable name="grandTotalNetSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{totalNetSales}]]></variableExpression>
+		</variable>
+		<variable name="totalNetSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{totalNetSales}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubSales}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTrans}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubSales}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTrans}]]></variableExpression>
+		</variable>
+		<variable name="grubHubCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{grubHubTrans}== null || $F{grubHubTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{grubHubSales}.divide($F{grubHubTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{grubHubTotalTransactions}== null || $V{grubHubTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{grubHubTotalSales}.divide($V{grubHubTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grubHubGrandTotalTransactions}== null || $V{grubHubGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{grubHubGrandTotalSales}.divide($V{grubHubGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="grubHubNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{grubHubSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{grubHubTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{grubHubGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalDollarsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="grubHubTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTransLy}]]></variableExpression>
+		</variable>
+		<variable name="grubHubGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{grubHubTransLy}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsSales}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTrans}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsSales}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTrans}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{uberEatsTrans}== null || $F{uberEatsTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{uberEatsSales}.divide($F{uberEatsTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{uberEatsTotalTransactions}== null || $V{uberEatsTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : $V{uberEatsTotalSales}.divide($V{uberEatsTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{uberEatsGrandTotalTransactions}== null || $V{uberEatsGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? null : $V{uberEatsGrandTotalSales}.divide($V{uberEatsGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="uberEatsNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{uberEatsSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{uberEatsTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{uberEatsGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandDollarsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTransLy}]]></variableExpression>
+		</variable>
+		<variable name="uberEatsGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{uberEatsTransLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalSales" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalTransactions" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalSales" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashSales}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalTransactions" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTrans}]]></variableExpression>
+		</variable>
+		<variable name="doorDashCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{doorDashTrans}== null || $F{doorDashTrans}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $F{doorDashSales}.divide($F{doorDashTrans}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalCheckAverage" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{doorDashTotalTransactions}== null || $V{doorDashTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashTotalSales}.divide($V{doorDashTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandCheckAverage" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{doorDashGrandTotalTransactions}== null || $V{doorDashGrandTotalTransactions}.compareTo(BigDecimal.ZERO) == 0) 
+? BigDecimal.ZERO : $V{doorDashGrandTotalSales}.divide($V{doorDashGrandTotalTransactions}, 6, RoundingMode.HALF_UP)]]></variableExpression>
+		</variable>
+		<variable name="doorDashNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($F{totalNetSales}== null || $F{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($F{doorDashSales}.divide($F{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalNetSalesPct" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1">
+			<variableExpression><![CDATA[($V{totalNetSales}== null || $V{totalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashTotalSales}.divide($V{totalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandNetSalesPct" class="java.math.BigDecimal">
+			<variableExpression><![CDATA[($V{grandTotalNetSales}== null || $V{grandTotalNetSales}.compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ZERO : new BigDecimal(100).multiply($V{doorDashGrandTotalSales}.divide($V{grandTotalNetSales}, 6, RoundingMode.HALF_UP))]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalDollarsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalDollarsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashDollarsLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashTotalTransactionsLy" class="java.math.BigDecimal" resetType="Group" resetGroup="Group1" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTransLy}]]></variableExpression>
+		</variable>
+		<variable name="doorDashGrandTotalTransactionsLy" class="java.math.BigDecimal" calculation="Sum">
+			<variableExpression><![CDATA[$F{doorDashTransLy}]]></variableExpression>
+		</variable>
+		<group name="Group1">
+			<groupExpression><![CDATA[$F{groupName}]]></groupExpression>
+		</group>
+	</subDataset>
+	<parameter name="LoggedInUser" class="com.jaspersoft.jasperserver.api.metadata.user.domain.User" isForPrompting="false"/>
+	<parameter name="LoggedInUsername" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getUsername()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserFullName" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{LoggedInUser}.getFullName()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="LoggedInUserTenantId" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="storeIdsTb" class="java.util.List" nestedType="java.lang.Integer">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new ArrayList()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="groupBy" class="java.lang.String">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA["area"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDate" class="com.monolithss.oneview.jr.date.JRTimestampRange">
+		<defaultValueExpression><![CDATA[new com.monolithss.oneview.jr.date.JRDateRangeBuilder("YESTERDAY").toDateRange()]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateFormatted" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{startDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateFormatted" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[new SimpleDateFormat("yyyyMMdd").format($P{endDate}.getStart())]]></defaultValueExpression>
+	</parameter>
+	<parameter name="WeekDatesTB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PeriodDatesTB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="startDateFilter" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[($P{PeriodDatesTB} != null)? $P{PeriodDatesTB} :
+(($P{WeekDatesTB} != null)? $P{WeekDatesTB} :
+$P{startDateFormatted})]]></defaultValueExpression>
+	</parameter>
+	<parameter name="endDateFilter" class="java.lang.String" isForPrompting="false">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+		<defaultValueExpression><![CDATA[($P{PeriodDatesTB} != null)? new java.lang.String(  "(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='tb') WHERE date > " + $P{PeriodDatesTB} + " AND day_of_period IN (1) ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='tb') WHERE date > " + $P{PeriodDatesTB} + " AND day_of_period IN (1) ORDER BY date ASC LIMIT 1))))") :
+(($P{WeekDatesTB} != null)? new java.lang.String(  "(SELECT (IF (((SELECT DATE_SUB(date, INTERVAL 1 DAY) FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='tb') WHERE date > " + $P{WeekDatesTB} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1) >= CURDATE()), (SELECT DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y%m%d')), (SELECT DATE_FORMAT(DATE_SUB(date, INTERVAL 1 DAY), '%Y%m%d') AS endDate FROM c_calendar JOIN org_brand ON (c_calendar.calendar_id = org_brand.calendar_id AND org_brand.code ='tb') WHERE date > " + $P{WeekDatesTB} + " AND day_of_period IN (1,8,15,22,29) ORDER BY date ASC LIMIT 1))))") :
+($P{endDateFormatted}))]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT 
+
+DATE($P!{startDateFilter}) AS startDate,
+DATE($P!{endDateFilter}) AS endDate
+
+ FROM dual]]>
+	</queryString>
+	<field name="startDate" class="java.util.Date"/>
+	<field name="endDate" class="java.util.Date"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="76" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="43" width="1300" height="33" uuid="e3ef2b66-6589-412f-8cdd-fac3a013cb89"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Taco Bell 3rd Party Delivery"]]></textFieldExpression>
+			</textField>
+			<image onErrorType="Blank">
+				<reportElement key="image-2" x="0" y="0" width="180" height="43" uuid="d6f8fb4b-51ad-4e61-b4c2-c66b2454cd0e"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<graphicElement>
+					<pen lineWidth="0.0" lineStyle="Solid"/>
+				</graphicElement>
+				<imageExpression><![CDATA[($P{LoggedInUserTenantId} != null) ? "/Files/images/logo.png" : "OdsLogo137x37.jpg"]]></imageExpression>
+			</image>
+			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
+				<reportElement x="1700" y="0" width="80" height="20" uuid="7292d94b-d0aa-402c-b49d-05225da819f5"/>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{startDate}]]></textFieldExpression>
+			</textField>
+			<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
+				<reportElement x="1700" y="20" width="80" height="20" uuid="5771a706-25ac-4398-a275-6b603fc2c3b6"/>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{endDate}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="1620" y="0" width="80" height="21" uuid="dbf22155-c35f-4222-a754-f4ac9c4a9af5">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Start Date"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="1620" y="20" width="80" height="21" uuid="1543b14c-e483-4fdc-9d27-90dfdc07d39f">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box rightPadding="4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["End Date"]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="134" splitType="Stretch">
+			<componentElement>
+				<reportElement x="0" y="0" width="1781" height="134" uuid="d170075d-3b3f-4ad3-b8ec-399b297ed3ca">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="3rdPartyDelivery" uuid="5d7244d2-815c-4062-8608-3251e3fe36b7">
+						<datasetParameter name="LoggedInUsername">
+							<datasetParameterExpression><![CDATA[$P{LoggedInUsername}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="storeIdsTb">
+							<datasetParameterExpression><![CDATA[$P{storeIdsTb}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="startDateFilter">
+							<datasetParameterExpression><![CDATA[$P{startDateFilter}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="endDateFilter">
+							<datasetParameterExpression><![CDATA[$P{endDateFilter}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="groupBy">
+							<datasetParameterExpression><![CDATA[$P{groupBy}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:columnGroup width="1780" uuid="6ebfceb8-ad74-4380-b03e-115a1cb80984">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Columns [22]"/>
+						<jr:groupHeader groupName="Group1">
+							<jr:cell style="Table_CH" height="20" rowSpan="1">
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" x="0" y="0" width="340" height="20" uuid="264f7ff0-dbed-4b2d-b14c-457f4ddc8f10"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$F{groupName}]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" x="340" y="0" width="480" height="20" uuid="61441ef2-e37b-43f0-8621-4ac57910e6de"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" x="820" y="0" width="480" height="20" uuid="67279c4f-d1c2-452a-9890-972bc9e662f4"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="1.0"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Group" x="1300" y="0" width="480" height="20" uuid="fdcd35f8-cd6c-44cc-9b63-6d0b3d7d4c38"/>
+									<box leftPadding="4">
+										<rightPen lineWidth="0.5"/>
+									</box>
+									<textElement verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+							</jr:cell>
+						</jr:groupHeader>
+						<jr:columnHeader height="20" rowSpan="1">
+							<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+							<property name="com.jaspersoft.studio.unit.height" value="px"/>
+							<textField>
+								<reportElement style="Column" mode="Opaque" x="340" y="0" width="480" height="20" forecolor="#000000" backcolor="#85DE97" uuid="a6cbd033-d7c6-4757-8e83-0961c38f5bcc">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["GRUBHUB"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" mode="Opaque" x="820" y="0" width="480" height="20" forecolor="#000000" backcolor="#8CC3FA" uuid="7543a597-cf04-4cc0-9b3d-3f63a5ea5de3">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["UBEREATS"]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement style="Column" mode="Opaque" x="1300" y="0" width="480" height="20" forecolor="#000000" backcolor="#F7B7EC" uuid="aec9bafd-70ce-41a4-9c3a-0309e709ba51">
+									<property name="com.jaspersoft.studio.unit.height" value="px"/>
+									<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+								</reportElement>
+								<box>
+									<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font size="10"/>
+								</textElement>
+								<textFieldExpression><![CDATA["DOORDASH"]]></textFieldExpression>
+							</textField>
+						</jr:columnHeader>
+						<jr:column width="100" uuid="fa39ee5a-b0a8-47d0-97a4-f82c11524a04">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField>
+									<reportElement style="Column" x="0" y="0" width="100" height="22" uuid="8ebec118-f1d8-4fcd-b7da-8cc771d9ae3c"/>
+									<box>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["REPORT TOTALS"]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="100" height="22" uuid="9f50e7ee-db9e-4e92-a25a-8232c60071fb"/>
+										<box>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement>
+											<font size="10"/>
+										</textElement>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" x="0" y="0" width="100" height="30" uuid="ec3b8f98-20a4-43de-8a06-3e043b2f15b4"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Store Number"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="100" height="20" uuid="2ffd3808-a379-469a-a934-c2a263bf85ad"/>
+									<box leftPadding="4">
+										<pen lineWidth="0.0"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{storeNumber}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="90" uuid="f4803cba-b416-41d3-9e91-fa067b3138d1">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField>
+									<reportElement style="Column" x="0" y="0" width="90" height="22" uuid="19f6aa61-16f3-4b3b-91db-59e762c85e59"/>
+									<box>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="90" height="22" uuid="7e14dd43-78ee-4d47-84d2-4dd8152bfc4d"/>
+										<box>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement>
+											<font size="10"/>
+										</textElement>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" x="0" y="0" width="90" height="30" uuid="d776f9c8-7cbd-4a23-b106-a7467f840342"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Store Name"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="90" height="20" uuid="cd055a73-7e82-4f21-bee3-7891568661b9"/>
+									<box leftPadding="4">
+										<pen lineWidth="0.0"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{storeName}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="70" uuid="33240f29-6e9d-46d1-ad6f-2c98b41015d0">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField>
+									<reportElement style="Column" x="0" y="0" width="70" height="22" uuid="9e4601b4-56e4-4214-981a-63a8a7e59a09"/>
+									<box>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[""]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="70" height="22" uuid="2a58677a-0ff8-42b5-ad5a-10ee09ee414a"/>
+										<box leftPadding="0" rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA["Totals"]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" x="0" y="0" width="70" height="30" uuid="7b9183a0-b947-405e-a578-b0372815a5c0"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Date"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="MM/dd/yyyy" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="70" height="20" uuid="6c9ee507-68f1-4197-9ad0-f171a39e7160"/>
+									<box leftPadding="4">
+										<pen lineWidth="0.0"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Left" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{date}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="b6460f9d-6c9c-4f31-b3d3-6ffb4f66f290">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="3ddd758e-410f-4236-a2d4-95aa67aa2a49"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grandTotalNetSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="9d00de4b-581f-4815-934c-6ea91f0ca417"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{totalNetSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="30" uuid="8964a7be-8281-4fe4-819d-24b1f4137dcc"/>
+									<box>
+										<rightPen lineWidth="0.5" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Total\nNet Sales \$"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="79658f28-5d61-4906-8bdc-f432fd08233e"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{totalNetSales}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="4bd9b402-daec-49eb-ad01-b2155b798e01">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="a7e0a039-86c6-4046-ae47-d87661e750d8"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="736cd139-511c-44dd-b6fb-4efe8eb58005"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="4658b8d1-85e0-4bc2-ab12-7d033f511639"/>
+									<box>
+										<leftPen lineWidth="0.0"/>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true" hyperlinkType="ReportExecution">
+									<reportElement x="0" y="0" width="80" height="20" forecolor="#208CC7" uuid="99174fbc-5639-473a-8e5a-84fa611273bb"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grubHubSales}]]></textFieldExpression>
+									<hyperlinkParameter name="_report">
+										<hyperlinkParameterExpression><![CDATA[$V{ticketReportPath}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="startDate">
+										<hyperlinkParameterExpression><![CDATA[$F{startDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="endDate">
+										<hyperlinkParameterExpression><![CDATA[$F{endDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="storeIdTb">
+										<hyperlinkParameterExpression><![CDATA[$F{store_id}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="payment_type_filter">
+										<hyperlinkParameterExpression><![CDATA["X:Grubhub"]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="2ede37c5-4beb-42e6-8f9e-2ca452115b96">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="8be4fca3-43d6-4a56-90a4-7e493c740a68"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell style="Table_CH" height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell style="Table_CH" height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="00395b28-d97d-4610-8f3e-45cbd935bbd4"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="7e61c4ea-da66-49c0-b767-742ba699149c"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transactions"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true" hyperlinkType="ReportExecution">
+									<reportElement x="0" y="0" width="80" height="20" forecolor="#208CC7" uuid="50b9433e-7b8d-442b-9fad-b25fb85e2ec8"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grubHubTrans}]]></textFieldExpression>
+									<hyperlinkParameter name="_report">
+										<hyperlinkParameterExpression><![CDATA[$V{ticketReportPath}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="startDate">
+										<hyperlinkParameterExpression><![CDATA[$F{startDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="endDate">
+										<hyperlinkParameterExpression><![CDATA[$F{endDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="storeIdTb">
+										<hyperlinkParameterExpression><![CDATA[$F{store_id}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="payment_type_filter">
+										<hyperlinkParameterExpression><![CDATA["X:Grubhub"]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="d1127749-bd51-4b58-8851-bfdc3a3351ad">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column7"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="2da9b8c8-cb87-4830-8f06-3c2ac6b8c8ea"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="dda0aadc-07a7-40d9-9ca5-9d8d81c64dba"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="6109f371-a933-428c-80b3-76cfe43f1a82"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="156af561-3baf-401f-a4c6-d4d66dbed497"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{grubHubCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="5dcdfb01-b8c3-4fe3-9d5b-0247233508f0">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column8"/>
+							<jr:tableHeader height="0" rowSpan="1"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="358d1c39-b0f5-4f51-872d-5651de6b108b"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupHeader groupName="Group1">
+								<jr:cell height="0" rowSpan="1"/>
+							</jr:groupHeader>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="f5bca5b0-f66b-4d23-a6a1-16826939deef"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="fc31bac2-e960-4c5d-8503-8f66a31b9aa5"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:columnFooter height="0" rowSpan="1"/>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="7339feef-4488-40da-8425-a7dc33af8053"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{grubHubNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="c7123186-b4f2-4b78-a493-b1e0f01b9418">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column9"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="453f7db3-ac9e-4af8-a897-67c5296a7e27"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalDollarsLy}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="3acf8f67-6f68-4843-84e0-c12b6eceb575"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalDollarsLy}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="c86f8cb4-ac36-40e2-9c6e-2a98a160c50d"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="ee8a800f-eeb6-437f-9797-0bf130ec2cd3"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grubHubDollarsLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="42d6cd15-78d5-4e9b-b43d-8d34ea79296b">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column10"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="4fcbe5d7-b649-469f-8000-09db19a25ba1"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{grubHubGrandTotalTransactionsLy}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="575e988b-cfdd-4d9c-8b90-c3716bf0ba9e"/>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{grubHubTotalTransactionsLy}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#85DE97" uuid="ae6510cd-1ec4-4d3d-b6c0-1c7e0824f5ae"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Trans LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="c1343206-ed2a-4225-bc46-a8da204fd924"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{grubHubTransLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="c3934295-bf95-42e1-be0b-78a111cc7e19">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column11"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="31f01de6-6474-49b7-aee5-dc1e8d1e53cc"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="0a24a0ff-6a98-41ba-8f0f-8b845b5d91b5"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="2104aaeb-3f97-457d-88a6-472786b6e160"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true" hyperlinkType="ReportExecution">
+									<reportElement x="0" y="0" width="80" height="20" forecolor="#208CC7" uuid="0285a153-17f6-43c2-925a-0cbbbefef09a"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{uberEatsSales}]]></textFieldExpression>
+									<hyperlinkParameter name="_report">
+										<hyperlinkParameterExpression><![CDATA[$V{ticketReportPath}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="startDate">
+										<hyperlinkParameterExpression><![CDATA[$F{startDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="endDate">
+										<hyperlinkParameterExpression><![CDATA[$F{endDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="storeIdTb">
+										<hyperlinkParameterExpression><![CDATA[$F{store_id}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="occasion_type_filter">
+										<hyperlinkParameterExpression><![CDATA["X:UberEatsFC"]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="f985d3dc-a400-4687-bda6-9b3418537feb">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column12"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="8dcebac1-50a7-40b7-a281-7fc2e246dd02"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="cc515b36-5b5b-44ce-b598-0478ff5c11d8"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="1d9a99c5-e2f1-4b1d-9353-300bbec97cc5"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transactions"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true" hyperlinkType="ReportExecution">
+									<reportElement x="0" y="0" width="80" height="20" forecolor="#208CC7" uuid="13c6b9ad-1067-4f5c-9037-bc5ed2d62ebc"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{uberEatsTrans}]]></textFieldExpression>
+									<hyperlinkParameter name="_report">
+										<hyperlinkParameterExpression><![CDATA[$V{ticketReportPath}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="startDate">
+										<hyperlinkParameterExpression><![CDATA[$F{startDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="endDate">
+										<hyperlinkParameterExpression><![CDATA[$F{endDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="storeIdTb">
+										<hyperlinkParameterExpression><![CDATA[$F{store_id}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="occasion_type_filter">
+										<hyperlinkParameterExpression><![CDATA["X:UberEatsFC"]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="d4853c7b-91db-47c1-9712-5e4a3494dbd6">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column13"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="be25f9ed-03de-4d11-b1df-c745b8035f3c"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="f559edcc-ed3c-4b08-899a-f5cadeb8c6c2"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="8601204f-65b7-4ad0-ba92-078ba63cbb33"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="2889fe92-f9e5-4f5a-9c1a-429cd7523a71"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{uberEatsCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="c74ece93-8586-480d-8f97-2aeb5ebb312a">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column14"/>
+							<jr:tableFooter height="22" rowSpan="1">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="79238d71-f70d-4b48-b85c-db844c6fd279"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22" rowSpan="1">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="ba59b0de-c33e-46e6-9912-8d30b62cb8a6"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalNetSalesPct}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30" rowSpan="1">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="2bc973d6-d7e5-4d00-8755-99d0f7897f83"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="7ee9e295-0217-47e4-8050-e119b040d934"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{uberEatsNetSalesPct}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="5dfd80c0-f969-42e4-a4f0-b832761c70e9">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column15"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="0b95c75c-66d2-42f7-9ef9-e1fbf7e8674e"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandDollarsLy}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="826a8a5b-1a44-4e2c-97a3-132d371a2b4f"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalDollarsLy}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="283b530e-55cf-451b-bf73-413ddf081937"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="4d9028fe-d360-4b02-88f1-5c242236df58"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{uberEatsDollarsLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="4bff81d0-7847-48dd-b596-feb7afa23aa4">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column16"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="2c205f74-da14-45e5-8b3a-ac22f5275452"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{uberEatsGrandTotalTransactionsLy}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="94a4f338-74c2-4928-84c4-24f6454a9245"/>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{uberEatsTotalTransactionsLy}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#8CC3FA" uuid="1820d0de-4b40-4c94-a376-33f41a0e1762"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Trans LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="76c3014c-7e6e-4fd9-830a-23167e386f17"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{uberEatsTransLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="250d4a34-6c25-4eec-b44e-481e74a31b8d">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column17"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="d182030b-87f5-4c37-b76f-7309a290b4a8"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalSales}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="120f4497-0d52-4570-934f-5b7d20a2ce63"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalSales}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="5f83410c-768f-4724-9077-834847db54c2">
+										<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+									</reportElement>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true" hyperlinkType="ReportExecution">
+									<reportElement x="0" y="0" width="80" height="20" forecolor="#208CC7" uuid="8ccb4b42-7f6f-4085-9c79-d03841a68d09"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashSales}]]></textFieldExpression>
+									<hyperlinkParameter name="_report">
+										<hyperlinkParameterExpression><![CDATA[$V{ticketReportPath}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="startDate">
+										<hyperlinkParameterExpression><![CDATA[$F{startDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="endDate">
+										<hyperlinkParameterExpression><![CDATA[$F{endDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="storeIdTb">
+										<hyperlinkParameterExpression><![CDATA[$F{store_id}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="payment_type_filter">
+										<hyperlinkParameterExpression><![CDATA["DoorDash"]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="76c1dd4e-60d6-46d4-af70-aef113a736ef">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column18"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="887f82ff-6415-4b42-b77a-b0b0699f400f"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalTransactions}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="70800a0b-9b4d-49cd-84b0-939a74f6cbde"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalTransactions}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="6d9fdeef-bec7-467c-a816-351e0a1a817f"/>
+									<box>
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Transactions"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true" hyperlinkType="ReportExecution">
+									<reportElement x="0" y="0" width="80" height="20" forecolor="#208CC7" uuid="6e2c6d80-0b0b-484e-a983-617e4fc5b7f7"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashTrans}]]></textFieldExpression>
+									<hyperlinkParameter name="_report">
+										<hyperlinkParameterExpression><![CDATA[$V{ticketReportPath}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="startDate">
+										<hyperlinkParameterExpression><![CDATA[$F{startDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="endDate">
+										<hyperlinkParameterExpression><![CDATA[$F{endDatePass}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="storeIdTb">
+										<hyperlinkParameterExpression><![CDATA[$F{store_id}]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+									<hyperlinkParameter name="payment_type_filter">
+										<hyperlinkParameterExpression><![CDATA["DoorDash"]]></hyperlinkParameterExpression>
+									</hyperlinkParameter>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="42222513-6b4d-49e4-9e06-21f0bcc3f637">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column19"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="f08edeb9-21d7-4b4f-8727-84cffd81f21b"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="4e614568-0462-463f-afd5-e67f9ce0015f"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField>
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="dc53a217-fdc1-4985-a5e9-7bbaee24464e"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Check Avg"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="d218f2ea-a570-4bd1-a1fe-1a60e035a5fd"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{doorDashCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="19ba159c-a047-4959-b493-81378f8c6ea8">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column20"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="0ffc0958-42ec-4610-8046-d754a8df08bc"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<box>
+										<bottomPen lineWidth="2.0" lineColor="#FFFFFF"/>
+									</box>
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="0cf49fc3-412b-4ac6-b048-3076aa985553"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalCheckAverage}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="02f2b247-fade-4d7e-9005-0791254e0e04"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Net Sales %"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="ee842561-8b67-4348-9e9c-bc07fef38625"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$V{doorDashCheckAverage}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="95689077-01b3-4adf-8489-ecd0cda239ef">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column21"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="ec192eb4-b32e-4f1d-8de7-172ee0e161a1"/>
+									<box rightPadding="4">
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalDollarsLy}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<textField pattern="#,##0.00" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="f5ecc634-2912-4bed-85cc-110cb1f4cdb2"/>
+										<box rightPadding="4">
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalDollarsLy}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="ef332524-df3b-436e-b0f6-4f0e055750f0"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Dollars LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0.00" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="46ccccf5-54ab-4e47-ab04-3f081deccc63"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashDollarsLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+						<jr:column width="80" uuid="6d5516d2-44fe-4ece-90a3-fd8a5f1b0531">
+							<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column22"/>
+							<jr:tableFooter height="22">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement style="Column" x="0" y="0" width="80" height="22" uuid="8afea94f-1f7b-4c97-990d-7654025368af"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle">
+										<font size="10" isBold="true"/>
+									</textElement>
+									<textFieldExpression><![CDATA[$V{doorDashGrandTotalTransactionsLy}]]></textFieldExpression>
+								</textField>
+							</jr:tableFooter>
+							<jr:groupFooter groupName="Group1">
+								<jr:cell height="22">
+									<textField pattern="#,##0" isBlankWhenNull="true">
+										<reportElement style="Group" x="0" y="0" width="80" height="22" uuid="df55e016-72cd-41f8-accb-0bcb714644bc"/>
+										<box rightPadding="4">
+											<pen lineWidth="0.5"/>
+											<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+											<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+										</box>
+										<textElement textAlignment="Right" verticalAlignment="Middle">
+											<font size="10" isBold="true"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$V{doorDashTotalTransactionsLy}]]></textFieldExpression>
+									</textField>
+								</jr:cell>
+							</jr:groupFooter>
+							<jr:columnHeader height="30">
+								<property name="com.jaspersoft.studio.unit.width" value="px"/>
+								<textField isBlankWhenNull="true">
+									<reportElement style="Column" positionType="FixRelativeToBottom" mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#000000" backcolor="#F7B7EC" uuid="b380ed59-d943-4cfc-903c-953a93e755e6"/>
+									<box>
+										<rightPen lineWidth="0.0" lineColor="#FFFFFF"/>
+									</box>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font size="10"/>
+									</textElement>
+									<textFieldExpression><![CDATA["Trans LY"]]></textFieldExpression>
+								</textField>
+							</jr:columnHeader>
+							<jr:detailCell height="20">
+								<textField pattern="#,##0" isBlankWhenNull="true">
+									<reportElement x="0" y="0" width="80" height="20" uuid="a3e129e7-befa-4a8f-b98d-5b1fb1cfe752"/>
+									<box rightPadding="4">
+										<pen lineWidth="0.5"/>
+										<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+										<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+									</box>
+									<textElement textAlignment="Right" verticalAlignment="Middle"/>
+									<textFieldExpression><![CDATA[$F{doorDashTransLy}]]></textFieldExpression>
+								</textField>
+							</jr:detailCell>
+						</jr:column>
+					</jr:columnGroup>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="44" splitType="Stretch">
+			<textField evaluationTime="Report" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="1700" y="0" width="80" height="24" uuid="3ddf5470-9275-474c-9221-e8c402d5ac9f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="1620" y="0" width="80" height="24" uuid="1ef0d1f5-bf83-4a81-9d0a-7e81a3f4e31a"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-13" x="180" y="0" width="159" height="24" uuid="00b59076-fb12-4309-99c2-bc3c8b579357"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{LoggedInUserFullName} == null ? "Unknown" : $P{LoggedInUserFullName}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="textField-12" x="0" y="0" width="179" height="24" uuid="5028a844-1f44-4081-85f8-e6f3c2690519">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Report By:"]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd yyyy hh:mma" isBlankWhenNull="true">
+				<reportElement x="0" y="24" width="180" height="20" uuid="4438d797-bf9a-40e1-b3ea-808544a7943e"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="24">
+			<staticText>
+				<reportElement key="staticText-16" x="0" y="0" width="1780" height="24" uuid="11e2ea8b-8e00-436c-ab22-ae957fbd5595"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[No data for current selections]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>
